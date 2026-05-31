@@ -36,6 +36,18 @@ jobs:
           echo "Service URL: $URL"
           echo "SERVICE_URL=$URL" >> $GITHUB_OUTPUT
 
+      - name: Persist Cloud Run URL to file
+        if: ${{ steps.get-url.outputs.SERVICE_URL != '' }}
+        run: |
+          echo "${{ steps.get-url.outputs.SERVICE_URL }}" > service-url.txt
+
+      - name: Upload Cloud Run URL artifact
+        if: ${{ steps.get-url.outputs.SERVICE_URL != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloud-run-url
+          path: service-url.txt
+
       - name: Rebuild client with VITE_API_BASE and publish gh-pages
         env:
           VITE_API_BASE: ${{ steps.get-url.outputs.SERVICE_URL }}
