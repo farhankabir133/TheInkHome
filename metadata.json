@@ -1,0 +1,6 @@
+{
+  "name": "The Ink Home",
+  "description": "The official high-performance cinematic 3D digital publication platform for The Ink Home",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
