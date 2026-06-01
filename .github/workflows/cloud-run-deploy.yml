@@ -13,19 +13,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
         with:
-          project_id: ${{ secrets.GCP_PROJECT }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-      - name: Build and push Docker image
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure gcloud project
         run: |
-          IMAGE=gcr.io/${{ secrets.GCP_PROJECT }}/the-ink-home
-          docker build -t $IMAGE .
-          docker push $IMAGE
+          gcloud config set project ${{ secrets.GCP_PROJECT }}
+
+      - name: Configure Docker to use gcloud credential helper
+        run: |
+          gcloud auth configure-docker --quiet
+
+      - name: Build and push Docker image (Buildx)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            gcr.io/${{ secrets.GCP_PROJECT }}/the-ink-home:latest
+            gcr.io/${{ secrets.GCP_PROJECT }}/the-ink-home:${{ github.sha }}
+
       - name: Deploy to Cloud Run
         run: |
-          IMAGE=gcr.io/${{ secrets.GCP_PROJECT }}/the-ink-home
+          IMAGE=gcr.io/${{ secrets.GCP_PROJECT }}/the-ink-home:${{ github.sha }}
           gcloud run deploy the-ink-home --image $IMAGE --region us-central1 --platform managed --allow-unauthenticated --project ${{ secrets.GCP_PROJECT }}
 
       - name: Capture Cloud Run URL
@@ -48,15 +60,19 @@ jobs:
           name: cloud-run-url
           path: service-url.txt
 
-      - name: Rebuild client with VITE_API_BASE and VITE_BASE=/ then publish gh-pages
+      - name: Rebuild client with VITE_API_BASE and VITE_BASE=/
         env:
           VITE_API_BASE: ${{ steps.get-url.outputs.SERVICE_URL }}
           VITE_BASE: /
           NODE_OPTIONS: "--max-old-space-size=2048"
         run: |
-          # Install deps and build client with VITE_API_BASE and VITE_BASE embedded
           npm ci
-          # Build will pick up VITE_API_BASE and VITE_BASE from env (import.meta.env / process.env)
           npm run build
-          # Publish dist to gh-pages
-          npx gh-pages -d dist
+
+      - name: Publish dist to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          # keep the CNAME from the public/CNAME file in the repo
+          keep_files: false
