@@ -12,7 +12,7 @@ An immersive, full-stack 3D spatial publication portal and dynamic metadata inde
 ## 1. Hero Section
 
 *   **Platform Tagline:** Spatial Literature in a Multi-Dimensional Cosmos
-*   **Live App Demo:** [Explore Portal](https://ais-pre-os4nnf7dng3kh7bb6qrw3h-544858969369.asia-southeast1.run.app)
+*   **Live Site:** [https://theinkhome.live/](https://theinkhome.live/) 🌐 *Now live on custom domain*
 *   **Publication Base:** [The Ink Home on Medium](https://medium.com/the-ink-home)
 *   **Developer Contact/Portfolio:** [Farhan Kabir @ Github](https://github.com/farhankabir133)
 
@@ -22,7 +22,7 @@ An immersive, full-stack 3D spatial publication portal and dynamic metadata inde
 
 **The Ink Home** is a production-grade, immersive spatial publishing architecture designed to bridge the flat landscape of traditional blog layouts with visually rich, dynamic WebGL environments. Architected on a modern full-stack foundation consisting of React 18, Vite, Node.js, and Three.js, it operates as an automated sync agent and cinematic gateway for the official Medium publication *The Ink Home*.
 
-Instead of relying on boilerplate API mock-ups, the system implements a real-time server-side synchronization engine that ingests the publication’s RSS feed directly, aggregates active posts, and scrapes high-fidelity author profile metrics in the background. It delivers this dynamic corpus through three interactive presentation layers: an immersive 3D floating carousel, a responsive responsive bento grid, and a sleek editorial list view. The result is a platform that transforms standard static reading materials into tactile, responsive, and cinematic digital art objects.
+Instead of relying on boilerplate API mock-ups, the system implements a real-time server-side synchronization engine that ingests the publication's RSS feed directly, aggregates active posts, and scrapes high-fidelity author profile metrics in the background. It delivers this dynamic corpus through three interactive presentation layers: an immersive 3D floating carousel, a responsive responsive bento grid, and a sleek editorial list view. The result is a platform that transforms standard static reading materials into tactile, responsive, and cinematic digital art objects.
 
 ---
 
@@ -184,7 +184,7 @@ The application is fully containerized and fits inside any cloud runtime (such a
 ## 10. Security Notes
 
 1.  **Sanitization Protection:** All content arrays fetched from Medium RSS include user-generated HTML nodes. To block XSS risks, the story rendering system limits tags and relies on controlled iframe bounds.
-2.  **Server IP Separation:** Scraping routines happen on Cloud Run instances. This shields the end-user’s IP signature from Medium's telemetry nodes, resulting in safe and privacy-compliant anonymous reading.
+2.  **Server IP Separation:** Scraping routines happen on Cloud Run instances. This shields the end-user's IP signature from Medium's telemetry nodes, resulting in safe and privacy-compliant anonymous reading.
 
 ---
 
