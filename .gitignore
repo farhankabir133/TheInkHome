@@ -6,3 +6,15 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Local Google Cloud SDK and service account keys (never commit keys)
+170313320957/
+*.json
+
+# Docker & artifacts
+.dockerignore
+Dockerfile
+
+# local scripts / temp
+scripts/
+.vscode/

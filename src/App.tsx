@@ -8,6 +8,8 @@ import StoryList from "./components/StoryList";
 import AuthorsSection from "./components/AuthorsSection";
 import StoryModal from "./components/StoryModal";
 import { Logo } from "./components/Logo";
+import FALLBACK_STORIES from "./data/fallbackStories";
+import FALLBACK_ABOUT from "./data/fallbackAbout";
 import { 
   Compass, 
   LayoutGrid, 
@@ -27,15 +29,16 @@ import {
 } from "lucide-react";
 
 export default function App() {
-  const [stories, setStories] = useState<Story[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Initialize stories from local fallback for instant rendering on static hosts
+  const [stories, setStories] = useState<Story[]>(() => FALLBACK_STORIES || []);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [editors, setEditors] = useState<any[]>([]);
-  const [writers, setWriters] = useState<any[]>([]);
-  const [aboutInfo, setAboutInfo] = useState<any>({
-    description: "The Ink Home is a place where words feel at home. Here, we share stories that explore life, writing, technology, productivity, relationships and mental health. Every piece is a reflection, a lesson, or a moment meant to inspire, connect, and spark thought.",
-    officialWebsite: "https://farhankabir133.github.io/The-Ink-Home/"
-  });
+  const [editors, setEditors] = useState<any[]>(() => FALLBACK_ABOUT.editors || []);
+  const [writers, setWriters] = useState<any[]>(() => FALLBACK_ABOUT.writers || []);
+  const [aboutInfo, setAboutInfo] = useState<any>(() => ({
+    description: FALLBACK_ABOUT.description,
+    officialWebsite: FALLBACK_ABOUT.officialWebsite
+  }));
   
   // Navigation & View Toggles
   const [entered, setEntered] = useState(false);
@@ -90,21 +93,102 @@ export default function App() {
     async function fetchInitialData() {
       try {
         setLoading(true);
-        console.log("Fetching stories and author board metadata in parallel...");
-        
-        const [storiesRes, aboutRes] = await Promise.all([
-          fetch("/api/stories"),
-          fetch("/api/about")
+        console.log("Fetching stories and author board metadata in parallel (with timeout)...");
+
+        // Helper: fetch with timeout
+        const fetchWithTimeout = (input: RequestInfo, timeout = 5000) => {
+          return Promise.race([
+            fetch(input),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), timeout))
+          ] as any);
+        };
+
+        // Base API URL configurable via Vite env: VITE_API_BASE
+        // If not provided, falls back to relative paths (useful for local dev or same-origin deploys)
+        const API_BASE = (import.meta as any).env?.VITE_API_BASE
+          ? String((import.meta as any).env.VITE_API_BASE).replace(/\/+$/g, "")
+          : "";
+
+        // Primary quick parallel attempt: server API (5s) and public proxy RSS (2s) raced
+        const rss2jsonQuick = (async () => {
+          try {
+            const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent("https://medium.com/feed/the-ink-home")}`;
+            const r = await fetchWithTimeout(rss2jsonUrl, 2000);
+            if (r && r.ok) return r.json();
+          } catch (e) {}
+          return null;
+        })();
+
+        const [storiesRes, aboutRes, rssQuickPayload] = await Promise.all([
+          fetchWithTimeout(`${API_BASE}/api/stories`, 5000).catch((e) => null),
+          fetchWithTimeout(`${API_BASE}/api/about`, 5000).catch((e) => null),
+          rss2jsonQuick
         ]);
         
-        if (storiesRes.ok) {
+        if (storiesRes && storiesRes.ok) {
           const storiesData = await storiesRes.json();
-          setStories(storiesData.stories || []);
+          // Merge dynamic stories but keep fallback order as quick-first
+          const dynamic = storiesData.stories || [];
+          if (dynamic.length > 0) {
+            setStories((prev) => {
+              // Prefer dynamic stories but keep initial quick fallback while merging
+              const slugs = new Set(dynamic.map((s: Story) => s.slug));
+              const merged = [...dynamic, ...prev.filter((p) => !slugs.has(p.slug))];
+              return merged;
+            });
+          }
+        } else if (storiesRes === null) {
+          console.warn("Stories fetch timed out or failed quickly; using fallback stories for now.");
         } else {
           console.warn(`Stories endpoint returned: ${storiesRes.status}`);
         }
+
+        // If rss2json quick returned useful items, merge them immediately for faster UX
+        if (rssQuickPayload && Array.isArray(rssQuickPayload.items) && rssQuickPayload.items.length > 0) {
+          try {
+            const mappedQuick: Story[] = rssQuickPayload.items.map((it: any) => {
+              const title = it.title || "Untitled";
+              const link = it.link || "";
+              const author = it.author || "The Ink Home";
+              const pubDate = it.pubDate || new Date().toUTCString();
+              const content = it.content || it.description || "";
+              const coverMatch = (content || "").match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);
+              const cover = coverMatch && coverMatch[1] ? coverMatch[1] : undefined;
+              let slug = "";
+              if (link) {
+                const parts = link.split("/");
+                const last = parts[parts.length - 1];
+                slug = last ? last.split("?")[0] : "";
+              }
+              if (!slug) slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+              return {
+                title,
+                link,
+                author,
+                role: "",
+                pubDate,
+                categories: Array.isArray(it.categories) ? it.categories : ["Editorial"],
+                description: (content || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().substring(0, 180) + "...",
+                content,
+                cover,
+                slug,
+                avatar: undefined
+              } as Story;
+            });
+
+            if (mappedQuick.length > 0) {
+              setStories((prev) => {
+                const slugs = new Set(prev.map((p) => p.slug));
+                const merged = [...mappedQuick.filter((m) => !slugs.has(m.slug)), ...prev];
+                return merged.slice(0, 30);
+              });
+            }
+          } catch (e) {
+            // ignore quick merge errors
+          }
+        }
         
-        if (aboutRes.ok) {
+        if (aboutRes && aboutRes.ok) {
           const aboutData = await aboutRes.json();
           setEditors(aboutData.editors || []);
           setWriters(aboutData.writers || []);
@@ -114,15 +198,268 @@ export default function App() {
               officialWebsite: aboutData.officialWebsite || "https://farhankabir133.github.io/The-Ink-Home/"
             });
           }
+        } else if (aboutRes === null) {
+          console.warn("About fetch timed out or failed quickly; showing fallback about info.");
         } else {
           console.warn(`About page endpoint returned: ${aboutRes.status}`);
         }
         
       } catch (err: any) {
-        console.error("Failed to load initial data: ", err);
+        console.error("Failed to load initial data quickly: ", err);
         setError(err.message || "Unknown error connecting to publication");
       } finally {
         setLoading(false);
+      }
+
+      // If we still have fewer than desired stories, try public rss2json proxy directly (works on static hosts)
+      try {
+        const DESIRED = 30;
+        const CACHE_KEY = "the-ink-home:stories-cache";
+        const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+
+        const now = Date.now();
+        // Use cached stories if recent
+        try {
+          const cached = localStorage.getItem(CACHE_KEY);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed?.ts && now - parsed.ts < CACHE_TTL && Array.isArray(parsed.stories) && parsed.stories.length >= DESIRED) {
+              setStories(parsed.stories.slice(0, DESIRED));
+              console.log("Using cached stories from localStorage");
+              return;
+            }
+          }
+        } catch (e) {
+          // ignore cache errors
+        }
+
+        if ((stories.length || 0) < DESIRED) {
+          console.log("Attempting rss2json proxy fetch for additional stories (target 30)...");
+          const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent("https://medium.com/feed/the-ink-home")}`;
+
+          const resp = await fetch(rss2jsonUrl, { cache: "no-cache" });
+          let mapped: Story[] = [];
+          if (resp.ok) {
+            const payload = await resp.json();
+            if (payload && Array.isArray(payload.items) && payload.items.length > 0) {
+              mapped = payload.items.map((it: any) => {
+                const title = it.title || "Untitled";
+                const link = it.link || "";
+                const author = it.author || "The Ink Home";
+                const pubDate = it.pubDate || new Date().toUTCString();
+                const content = it.content || it.description || "";
+                const coverMatch = (content || "").match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);
+                const cover = coverMatch && coverMatch[1] ? coverMatch[1] : "";
+                let slug = "";
+                if (link) {
+                  const parts = link.split("/");
+                  const last = parts[parts.length - 1];
+                  slug = last ? last.split("?")[0] : "";
+                }
+                if (!slug) {
+                  slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+                }
+
+                return {
+                  title,
+                  link,
+                  author,
+                  role: "",
+                  pubDate,
+                  categories: Array.isArray(it.categories) ? it.categories : ["Editorial"],
+                  description: (content || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().substring(0, 180) + "...",
+                  content,
+                  cover: cover || undefined,
+                  slug,
+                  avatar: undefined
+                } as Story;
+              });
+            }
+          }
+
+          // If rss2json didn't give enough items, try AllOrigins raw RSS and parse
+          if (mapped.length < DESIRED) {
+            try {
+              console.log("rss2json returned fewer items; trying AllOrigins raw RSS fetch...");
+              const allOriginsUrl = `https://api.allorigins.win/get?url=${encodeURIComponent("https://medium.com/feed/the-ink-home")}`;
+              const rawResp = await fetch(allOriginsUrl, { cache: "no-cache" });
+              if (rawResp.ok) {
+                const rawJson = await rawResp.json();
+                const xml = rawJson?.contents || rawJson;
+                if (xml && typeof xml === "string") {
+                  // Simple RSS parser to extract <item> blocks
+                  const items: Story[] = [];
+                  const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+                  let m;
+                  while ((m = itemRegex.exec(xml)) !== null) {
+                    const item = m[1];
+                    const titleMatch = item.match(/<title>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/title>/i);
+                    const linkMatch = item.match(/<link>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/link>/i);
+                    const authorMatch = item.match(/<dc:creator>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/dc:creator>/i) || item.match(/<creator>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/creator>/i);
+                    const pubDateMatch = item.match(/<pubDate>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/pubDate>/i);
+                    const contentMatch = item.match(/<content:encoded>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/content:encoded>/i) || item.match(/<description>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/description>/i);
+
+                    const title = (titleMatch ? (titleMatch[1] || titleMatch[2]) : "Untitled") || "Untitled";
+                    const link = (linkMatch ? (linkMatch[1] || linkMatch[2]) : "") || "";
+                    const author = (authorMatch ? (authorMatch[1] || authorMatch[2]) : "The Ink Home") || "The Ink Home";
+                    const pubDate = (pubDateMatch ? (pubDateMatch[1] || pubDateMatch[2]) : new Date().toUTCString()) || new Date().toUTCString();
+                    const content = (contentMatch ? (contentMatch[1] || contentMatch[2]) : "") || "";
+                    const coverMatch = content.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);
+                    const cover = coverMatch && coverMatch[1] ? coverMatch[1] : undefined;
+
+                    let slug = "";
+                    if (link) {
+                      const parts = link.split("/");
+                      const last = parts[parts.length - 1];
+                      slug = last ? last.split("?")[0] : "";
+                    }
+                    if (!slug) slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+                    items.push({
+                      title,
+                      link,
+                      author,
+                      role: "",
+                      pubDate,
+                      categories: ["Editorial"],
+                      description: content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().substring(0, 180) + "...",
+                      content,
+                      cover,
+                      slug,
+                      avatar: undefined
+                    });
+                  }
+
+                  if (items.length > 0) {
+                    // append items not already in mapped
+                    const existingSlugs = new Set(mapped.map((s) => s.slug));
+                    for (const it of items) {
+                      if (!existingSlugs.has(it.slug)) mapped.push(it);
+                      if (mapped.length >= DESIRED) break;
+                    }
+                  }
+                }
+              }
+            } catch (allErr) {
+              console.warn("AllOrigins RSS fetch failed:", allErr);
+            }
+          }
+
+          // If still short, aggressively scrape the publication HTML for article links and fetch individual pages
+          if (mapped.length < DESIRED) {
+            try {
+              console.log("Still short on items; scraping publication homepage for article links via AllOrigins...");
+              const pubUrl = "https://medium.com/the-ink-home";
+              const pubAllUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(pubUrl)}`;
+              const pubResp = await fetch(pubAllUrl, { cache: "no-cache" });
+              if (pubResp.ok) {
+                const pubJson = await pubResp.json();
+                const html = pubJson?.contents || pubJson;
+                if (html && typeof html === "string") {
+                  // Find links to articles under the publication
+                  const linkRegex = /https:\/\/medium.com\/the-ink-home\/[a-z0-9\-_%]+/ig;
+                  const found = new Set<string>();
+                  let m;
+                  while ((m = linkRegex.exec(html)) !== null) {
+                    found.add(m[0]);
+                  }
+
+                  // Also try relative links
+                  const relRegex = /href=["']\/(?:the-ink-home)\/([a-z0-9\-_%]+)["']/ig;
+                  while ((m = relRegex.exec(html)) !== null) {
+                    found.add(`https://medium.com/the-ink-home/${m[1]}`);
+                  }
+
+                  const links = Array.from(found).slice(0, DESIRED * 2);
+                  // Fetch each article page sequentially until we have DESIRED items
+                  for (const link of links) {
+                    if (mapped.length >= DESIRED) break;
+                    try {
+                      const articleAll = `https://api.allorigins.win/get?url=${encodeURIComponent(link)}`;
+                      const artResp = await fetch(articleAll, { cache: "no-cache" });
+                      if (!artResp.ok) continue;
+                      const artJson = await artResp.json();
+                      const artHtml = artJson?.contents || artJson;
+                      if (!artHtml || typeof artHtml !== "string") continue;
+
+                      // Extract title, content snippet, image, author, pubDate
+                      const tMatch = artHtml.match(/<title>([^<]+)<\/title>/i);
+                      const title = (tMatch && tMatch[1]) ? tMatch[1].replace(/\s+\|\s+Medium.*$/i, "").trim() : "Untitled";
+                      const linkMatch = link;
+                      const authorMatch = artHtml.match(/rel=\"author\"[^>]*>([^<]+)<\/a>/i) || artHtml.match(/<meta name=\"author\" content=\"([^\"]+)\"/i);
+                      const author = authorMatch ? (authorMatch[1] || authorMatch[0]) : "The Ink Home";
+                      const dateMatch = artHtml.match(/<meta property=\"article:published_time\" content=\"([^\"]+)\"/i) || artHtml.match(/<time[^>]*datetime=\"([^\"]+)\"/i);
+                      const pubDate = dateMatch ? (dateMatch[1] || new Date().toUTCString()) : new Date().toUTCString();
+                      const contentMatch = artHtml.match(/<article[\s\S]*?<\/article>/i) || artHtml.match(/<section[\s\S]*?<\/section>/i) || ["",""];
+                      const content = contentMatch && contentMatch[0] ? contentMatch[0] : "";
+                      const imgMatch = artHtml.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i);
+                      const cover = imgMatch && imgMatch[1] ? imgMatch[1] : undefined;
+                      let slug = "";
+                      try {
+                        const parts = link.split("/");
+                        slug = parts[parts.length - 1] || parts[parts.length - 2] || title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+                      } catch (e) {
+                        slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+                      }
+
+                      const item: Story = {
+                        title: title.trim(),
+                        link: linkMatch,
+                        author: author.trim(),
+                        role: "",
+                        pubDate,
+                        categories: ["Editorial"],
+                        description: (content || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().substring(0, 180) + "...",
+                        content,
+                        cover,
+                        slug,
+                        avatar: undefined
+                      };
+
+                      // Dedupe and add
+                      if (!mapped.some((s) => s.slug === item.slug)) {
+                        mapped.push(item);
+                      }
+                    } catch (e) {
+                      // continue on per-article errors
+                      continue;
+                    }
+                  }
+                }
+              }
+            } catch (scrapeErr) {
+              console.warn("Publication scraping failed:", scrapeErr);
+            }
+          }
+
+          // Merge mapped with current stories (dedupe)
+          if (mapped.length > 0) {
+            setStories((prev) => {
+              const slugs = new Set();
+              const merged: Story[] = [];
+              for (const s of mapped) {
+                if (!slugs.has(s.slug)) {
+                  merged.push(s);
+                  slugs.add(s.slug);
+                }
+              }
+              for (const p of prev) {
+                if (!slugs.has(p.slug)) {
+                  merged.push(p);
+                  slugs.add(p.slug);
+                }
+              }
+              const final = merged.slice(0, DESIRED);
+              // Cache to localStorage
+              try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), stories: final }));
+              } catch (e) {}
+              return final;
+            });
+          }
+        }
+      } catch (rssErr) {
+        console.warn("rss2json/allorigins fallback failed:", rssErr);
       }
     }
     fetchInitialData();
