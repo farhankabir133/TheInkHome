@@ -1,0 +1,17 @@
+node_modules/
+.git/
+.vscode/
+.idea/
+.DS_Store
+.env
+.env.*
+coverage/
+src/
+scripts/
+.vite/
+.cache/
+dist/server.cjs
+dist/server.cjs.map
+*.log
+tmp/
+!.vercelignore
