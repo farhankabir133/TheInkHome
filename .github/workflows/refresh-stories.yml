@@ -1,0 +1,29 @@
+name: Refresh stories cache
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/10 * * * *' # every 10 minutes
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install
+        run: npm ci
+
+      - name: Run refresh script
+        env:
+          STORIES_TTL_SECONDS: '300'
+        run: node scripts/refresh-stories.js
