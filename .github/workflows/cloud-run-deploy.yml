@@ -1,78 +1,46 @@
-name: Deploy to Cloud Run
+name: CI — lint, test, build & publish
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
 
 jobs:
-  build-deploy:
+  ci-build-publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Configure gcloud project
-        run: |
-          gcloud config set project ${{ secrets.GCP_PROJECT }}
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Configure Docker to use gcloud credential helper
-        run: |
-          gcloud auth configure-docker --quiet
+      - name: Lint / typecheck
+        run: npm run lint
 
-      - name: Build and push Docker image (Buildx)
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: |
-            gcr.io/${{ secrets.GCP_PROJECT }}/the-ink-home:latest
-            gcr.io/${{ secrets.GCP_PROJECT }}/the-ink-home:${{ github.sha }}
+      - name: Run unit tests
+        run: npm test -- --run
 
-      - name: Deploy to Cloud Run
-        run: |
-          IMAGE=gcr.io/${{ secrets.GCP_PROJECT }}/the-ink-home:${{ github.sha }}
-          gcloud run deploy the-ink-home --image $IMAGE --region us-central1 --platform managed --allow-unauthenticated --project ${{ secrets.GCP_PROJECT }}
-
-      - name: Capture Cloud Run URL
-        id: get-url
-        run: |
-          SERVICE=the-ink-home
-          URL=$(gcloud run services describe $SERVICE --project=${{ secrets.GCP_PROJECT }} --region=us-central1 --format='value(status.url)')
-          echo "Service URL: $URL"
-          echo "SERVICE_URL=$URL" >> $GITHUB_OUTPUT
-
-      - name: Persist Cloud Run URL to file
-        if: ${{ steps.get-url.outputs.SERVICE_URL != '' }}
-        run: |
-          echo "${{ steps.get-url.outputs.SERVICE_URL }}" > service-url.txt
-
-      - name: Upload Cloud Run URL artifact
-        if: ${{ steps.get-url.outputs.SERVICE_URL != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: cloud-run-url
-          path: service-url.txt
-
-      - name: Rebuild client with VITE_API_BASE and VITE_BASE=/
+      - name: Build production bundle
         env:
-          VITE_API_BASE: ${{ steps.get-url.outputs.SERVICE_URL }}
-          VITE_BASE: /
           NODE_OPTIONS: "--max-old-space-size=2048"
-        run: |
-          npm ci
-          npm run build
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
+          VITE_BASE: ${{ secrets.VITE_BASE }}
+        run: npm run build
 
       - name: Publish dist to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-          # keep the CNAME from the public/CNAME file in the repo
           keep_files: false
