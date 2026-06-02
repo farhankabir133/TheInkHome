@@ -1,0 +1,32 @@
+<!doctype html>
+<!--
+  Subscribe widget for The Ink Home
+  - Vanilla HTML/CSS/JS
+  - Accessible, responsive, privacy-safe (does not store emails)
+  - On valid submit redirects to Medium newsletter page with tracking params
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="stylesheet" href="/subscribe-widget.css" />
+
+<div id="the-ink-home-subscribe" class="subscribe-card" role="region" aria-label="Subscribe to The Ink Home">
+  <div class="subscribe-inner">
+    <h2 class="subscribe-title">Subscribe to The Ink Home</h2>
+    <p class="subscribe-sub">Get new stories delivered straight to your inbox</p>
+
+    <form id="the-ink-home-form" class="subscribe-form" novalidate>
+      <div class="field">
+        <label for="the-ink-home-email" class="visually-hidden">Email address</label>
+        <input id="the-ink-home-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@domain.com" aria-label="Email address" required />
+        <div id="the-ink-home-error" class="error" role="alert" aria-live="polite" hidden></div>
+      </div>
+
+      <div class="actions">
+        <button id="the-ink-home-cta" class="btn" type="submit">Subscribe</button>
+        <a class="read-medium" href="https://medium.com/the-ink-home" target="_blank" rel="noopener">Read on Medium</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/subscribe-widget.js" defer></script>
