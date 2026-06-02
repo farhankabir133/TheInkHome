@@ -22,3 +22,5 @@ Dockerfile
 scripts/
 .vscode/
 .vercel
+node_modules/
+dist/
