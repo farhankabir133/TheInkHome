@@ -1,19 +1,15 @@
-node_modules/
-.git/
-.github/
-.vscode/
-.idea/
-.DS_Store
-.env
-.env.*
-coverage/
-scripts/
-.vite/
-.cache/
-*.log
-tmp/
-!.vercelignore
-dist/
-!dist/index.html
-!dist/assets/
-!dist/api/
+# Ignore everything
+*
+
+# But not these files...
+!/vercel.json
+!/package.json
+!/package-lock.json
+!/vite.config.ts
+!/tsconfig.json
+!/index.html
+
+# And not these directories...
+!/src
+!/assets
+!/api
