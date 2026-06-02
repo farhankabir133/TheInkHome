@@ -12,6 +12,17 @@ jobs:
       UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
       UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
     steps:
+      - name: Validate Upstash secrets
+        env:
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+        run: |
+          if [ -z "$UPSTASH_REDIS_REST_URL" ] || [ -z "$UPSTASH_REDIS_REST_TOKEN" ]; then
+            echo "ERROR: UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN is not set as a repository secret." >&2
+            echo "Please add them at: Settings → Secrets & variables → Actions" >&2
+            exit 1
+          fi
+          echo "Upstash secrets present. Proceeding with refresh."
       - name: Checkout
         uses: actions/checkout@v4
 

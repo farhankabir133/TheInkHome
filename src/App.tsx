@@ -27,6 +27,7 @@ import {
   Heart,
   Bookmark
 } from "lucide-react";
+import Subscribe from "./components/Subscribe";
 
 export default function App() {
   // Initialize stories from local fallback for instant rendering on static hosts
@@ -652,6 +653,11 @@ export default function App() {
                   </div>
 
                   {/* Horizontal Auto-Scroller ticker containing stories summaries */}
+                  {/* Subscribe card (inline) */}
+                  <div className="max-w-4xl mx-auto mb-4 px-4">
+                    <Subscribe />
+                  </div>
+
                   <div className="relative w-full overflow-hidden border-t border-b border-white/10 py-4 bg-black/40 backdrop-blur-sm">
                     <div className="flex gap-4 animate-marquee hover:pause whitespace-nowrap">
                       {stories.map((story) => (
