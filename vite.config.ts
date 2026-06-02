@@ -10,8 +10,6 @@ export default defineConfig(() => {
     base:
       (typeof (process.env.VITE_BASE) === 'string' && process.env.VITE_BASE.length > 0)
         ? process.env.VITE_BASE
-        : process.env.NODE_ENV === 'production'
-        ? '/TheInkHome/'
         : '/',
     plugins: [react(), tailwindcss()],
     resolve: {
