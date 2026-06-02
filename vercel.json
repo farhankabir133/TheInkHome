@@ -1,9 +1,17 @@
 {
   "version": 2,
-  "functions": {
-    "api/*.js": {
-      "memory": 256,
-      "maxDuration": 10
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "installCommand": "npm install",
+        "buildCommand": "npm run build"
+      }
     }
-  }
+  ]
 }
