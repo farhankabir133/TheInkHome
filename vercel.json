@@ -1,9 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "package.json", "use": "@vercel/static-build" },
-    { "src": "api/**/*.js", "use": "@vercel/node" }
-  ],
   "functions": {
     "api/*.js": {
       "memory": 256,
