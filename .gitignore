@@ -6,21 +6,3 @@ coverage/
 *.log
 .env*
 !.env.example
-
-# Local Google Cloud SDK and service account keys (never commit keys)
-170313320957/
-# Ignore specific common secrets but allow project config files like vercel.json
-inkhome-sa-key.json
-*.key
-*.pem
-
-# Docker & artifacts
-.dockerignore
-Dockerfile
-
-# local scripts / temp
-scripts/
-.vscode/
-.vercel
-node_modules/
-dist/

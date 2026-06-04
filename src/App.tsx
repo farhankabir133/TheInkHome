@@ -43,6 +43,7 @@ export default function App() {
   
   // Navigation & View Toggles
   const [entered, setEntered] = useState(false);
+  const [bgMode, setBgMode] = useState<"stellar" | "ink" | "forest" | "constellation">("stellar");
   const [activeTab, setActiveTab] = useState<"3d" | "grid" | "list" | "authors" | "saved">("3d");
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
 
@@ -556,7 +557,43 @@ export default function App() {
       <div className="absolute bottom-[20%] left-[-10%] w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-[140px] pointer-events-none z-[1]" />
 
       {/* 3D Cosmic Constellation Scene */}
-      <ThreeBackground />
+      <ThreeBackground mode={bgMode} activeTab={activeTab} />
+
+      {/* Floating Atmosphere Customizer Deck */}
+      <div 
+        className="fixed bottom-6 left-6 z-40 flex items-center gap-1.5 p-1 bg-[#111111]/90 border border-white/10 text-[9px] sm:text-[10px] font-mono uppercase tracking-wider backdrop-blur-md rounded shadow-lg shadow-black/80"
+        id="atmosphere-deck"
+      >
+        <span className="hidden md:inline-block px-1.5 text-slate-500 font-bold select-none text-[9px] uppercase tracking-widest pl-2">Atmosphere:</span>
+        <button
+          onClick={() => setBgMode("stellar")}
+          className={`px-2 py-1 transition-all cursor-pointer ${bgMode === "stellar" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-cyan-400"}`}
+          title="Stellar Universe Node"
+        >
+          🌌 Cosmic
+        </button>
+        <button
+          onClick={() => setBgMode("ink")}
+          className={`px-2 py-1 transition-all cursor-pointer ${bgMode === "ink" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-cyan-400"}`}
+          title="Flowing Writer's Ink"
+        >
+          ✒️ Ink
+        </button>
+        <button
+          onClick={() => setBgMode("forest")}
+          className={`px-2 py-1 transition-all cursor-pointer ${bgMode === "forest" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-cyan-400"}`}
+          title="Cozy Forest Cabin Embers"
+        >
+          🌲 Cabin
+        </button>
+        <button
+          onClick={() => setBgMode("constellation")}
+          className={`px-2 py-1 transition-all cursor-pointer ${bgMode === "constellation" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-teal-400"}`}
+          title="Thought Constellations Network"
+        >
+          🕸️ Neural
+        </button>
+      </div>
 
       {/* Floating Sound Controller */}
       <button 

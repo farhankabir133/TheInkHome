@@ -5,12 +5,6 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    // Base path for assets. Can be overridden at build time via VITE_BASE.
-    // Defaults to '/TheInkHome/' for repo-based gh-pages builds, or '/' for dev.
-    base:
-      (typeof (process.env.VITE_BASE) === 'string' && process.env.VITE_BASE.length > 0)
-        ? process.env.VITE_BASE
-        : '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
