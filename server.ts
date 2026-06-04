@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 
 // Fallback high-fidelity digital art and spatial editorial articles for "The Ink Home"
@@ -505,6 +506,26 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Programmatically copy The_Ink_Home.webp logo to public/assets for reliable Vite integration
+  try {
+    const srcDir = path.join(process.cwd(), "assets");
+    const destDir = path.join(process.cwd(), "public/assets");
+    const srcFile = path.join(srcDir, "The_Ink_Home.webp");
+    const destFile = path.join(destDir, "The_Ink_Home.webp");
+
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+    if (fs.existsSync(srcFile)) {
+      fs.copyFileSync(srcFile, destFile);
+      console.log("Successfully synchronized Logo asset to public/assets/The_Ink_Home.webp");
+    } else {
+      console.warn("Source logo file not found at:", srcFile);
+    }
+  } catch (err) {
+    console.error("Failed to copy logo asset: ", err);
+  }
+
   app.use(express.json());
 
   // API Route: Get Medium Stories with Multi-Tier Fallback (Bypasses Cloudflare 403 blocks)
@@ -682,6 +703,9 @@ async function startServer() {
       res.json(FALLBACK_ABOUT);
     }
   });
+
+  // Serve raw assets directory directly so both Dev & Prod can reliably access files like The_Ink_Home.webp
+  app.use("/assets", express.static(path.join(process.cwd(), "assets")));
 
   // Vite middleware setup for running Dev/Production environment correctly
   if (process.env.NODE_ENV !== "production") {

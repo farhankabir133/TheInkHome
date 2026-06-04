@@ -1,4 +1,5 @@
 import React from "react";
+import inkHomeLogo from "../../assets/The_Ink_Home.webp";
 
 interface LogoProps {
   className?: string;
@@ -13,18 +14,15 @@ export const Logo: React.FC<LogoProps> = ({
   iconOnly = false,
   textColor = "text-white"
 }) => {
-  // Vite-friendly static asset URL. This avoids typings issues with direct image imports.
-  const logoSrc = new URL("../../assets/The_Ink_Home.webp", import.meta.url).href;
-
   return (
     <div className={`flex items-center gap-3 select-none ${className}`}>
       <img
-        src={logoSrc}
-        alt="The Ink Home logo"
+        src={inkHomeLogo}
+        alt="The Ink Home Logo"
         width={size}
         height={size}
-        style={{ width: size, height: size, objectFit: "contain" }}
-        className="transition-all duration-300 drop-shadow-[0_6px_18px_rgba(0,0,0,0.45)] rounded"
+        style={{ width: size, height: size }}
+        className="object-contain max-w-full max-h-full flex-shrink-0 transition-all duration-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
       />
 
       {/* Optional typography lockup - condensed elegant display sans/serif pairing */}
