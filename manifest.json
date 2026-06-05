@@ -1,0 +1,18 @@
+{
+  "name": "The Ink Home",
+  "short_name": "The Ink Home",
+  "description": "Where spatial typography, code shaders, and cyber-philosophical stories merge into floating geometric objects in space.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/assets/The_Ink_Home.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ]
+}
