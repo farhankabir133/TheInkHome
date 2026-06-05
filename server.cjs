@@ -24,6 +24,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 // server.ts
 var import_express = __toESM(require("express"), 1);
 var import_path = __toESM(require("path"), 1);
+var import_fs = __toESM(require("fs"), 1);
 var import_vite = require("vite");
 var DEFAULT_STORIES = [
   {
@@ -459,7 +460,30 @@ function parseMediumRSS(xmlText) {
 async function startServer() {
   const app = (0, import_express.default)();
   const PORT = 3e3;
+  try {
+    const srcDir = import_path.default.join(process.cwd(), "assets");
+    const destDir = import_path.default.join(process.cwd(), "public/assets");
+    const srcFile = import_path.default.join(srcDir, "The_Ink_Home.webp");
+    const destFile = import_path.default.join(destDir, "The_Ink_Home.webp");
+    if (!import_fs.default.existsSync(destDir)) {
+      import_fs.default.mkdirSync(destDir, { recursive: true });
+    }
+    if (import_fs.default.existsSync(srcFile)) {
+      import_fs.default.copyFileSync(srcFile, destFile);
+      console.log("Successfully synchronized Logo asset to public/assets/The_Ink_Home.webp");
+    } else {
+      console.warn("Source logo file not found at:", srcFile);
+    }
+  } catch (err) {
+    console.error("Failed to copy logo asset: ", err);
+  }
   app.use(import_express.default.json());
+  app.post("/api/log-error", (req, res) => {
+    console.error("=== BROWSER CONSOLE ERROR RECEIVED ===");
+    console.error(JSON.stringify(req.body, null, 2));
+    console.error("=====================================");
+    res.sendStatus(200);
+  });
   app.get("/api/stories", async (req, res) => {
     let xmlData = "";
     let fetchedStories = [];
@@ -605,6 +629,7 @@ async function startServer() {
       res.json(FALLBACK_ABOUT);
     }
   });
+  app.use("/assets", import_express.default.static(import_path.default.join(process.cwd(), "assets")));
   if (process.env.NODE_ENV !== "production") {
     const vite = await (0, import_vite.createServer)({
       server: { middlewareMode: true },
