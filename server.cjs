@@ -97,7 +97,7 @@ var DEFAULT_STORIES = [
 ];
 var FALLBACK_ABOUT = {
   description: "The Ink Home is a place where words feel at home. Here, we share stories that explore life, writing, technology, productivity, relationships and mental health. Every piece is a reflection, a lesson, or a moment meant to inspire, connect, and spark thought.",
-  officialWebsite: "https://farhankabir133.github.io/The-Ink-Home/",
+  officialWebsite: "https://theinkhome.live/",
   editors: [
     {
       name: "Farhan Kabir",
@@ -387,10 +387,10 @@ async function serveSPAWithSEO(req, res, viteInstance) {
     await syncData();
   }
   const story = cache.stories.find((s) => s.slug === slug);
-  let title = "The Ink Home | Volumetric Digital Publication";
+  let title = "The Ink Home | Where Words Feel at Home";
   let description = "Where spatial typography, code shaders, and cyber-philosophical stories merge into floating geometric objects in space.";
   let cover = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80";
-  let url = `https://theinkhome.com/story/${slug || ""}`;
+  let url = `https://theinkhome.live/story/${slug || ""}`;
   if (story) {
     title = `${story.title} | The Ink Home`;
     description = story.description || description;
