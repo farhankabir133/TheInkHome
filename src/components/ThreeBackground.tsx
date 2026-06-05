@@ -601,14 +601,19 @@ export default function ThreeBackground({ mode = "stellar", activeTab }: ThreeBa
 
       } else {
         // STELLAR (Default Cosmos Mode): Pure spherical rotation
-        starParticles.rotation.y = elapsedTime * 0.035;
-        starParticles.rotation.x = elapsedTime * 0.012;
+        const speedScale = currentTabRef.current === "story" ? 2.5 : 1.0;
+        starParticles.rotation.y = elapsedTime * 0.035 * speedScale;
+        starParticles.rotation.x = elapsedTime * 0.012 * speedScale;
 
         rings.forEach((ring, index) => {
-          ring.rotation.x += 0.001 * (index + 1);
-          ring.rotation.y += 0.002 * (index + 2);
+          ring.rotation.x += 0.001 * (index + 1) * speedScale;
+          ring.rotation.y += 0.002 * (index + 2) * speedScale;
         });
       }
+
+      // Camera Z distance transition based on active tab
+      const targetZ = currentTabRef.current === "story" ? 18 : 35;
+      camera.position.z += (targetZ - camera.position.z) * 0.05;
 
       // Camera parallax smooth inertia calculations
       camera.position.x += (mouseX * 5 - camera.position.x) * 0.05;

@@ -2,7 +2,7 @@
 
 export const FALLBACK_ABOUT = {
   description: "The Ink Home is a place where words feel at home. Here, we share stories that explore life, writing, technology, productivity, relationships and mental health.",
-  officialWebsite: "https://farhankabir133.github.io/The-Ink-Home/",
+  officialWebsite: "https://theinkhome.live/",
   editors: [
     {
       name: "Farhan Kabir",

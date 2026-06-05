@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Story } from "./types";
-import ThreeBackground from "./components/ThreeBackground";
-import Carousel3D from "./components/Carousel3D";
+
+const ThreeBackground = lazy(() => import("./components/ThreeBackground"));
+const Carousel3D = lazy(() => import("./components/Carousel3D"));
 import StoryGrid from "./components/StoryGrid";
 import StoryList from "./components/StoryList";
 import AuthorsSection from "./components/AuthorsSection";
@@ -46,6 +47,105 @@ export default function App() {
   const [bgMode, setBgMode] = useState<"stellar" | "ink" | "forest" | "constellation">("stellar");
   const [activeTab, setActiveTab] = useState<"3d" | "grid" | "list" | "authors" | "saved">("3d");
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+
+  const pendingSlugRef = useRef<string | null>(null);
+
+  // Mouse coords & Scroll tracking for Typographic Kinetic motion
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [scrollY, setScrollY] = useState(0);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const x = (e.clientX / window.innerWidth) * 2 - 1;
+    const y = (e.clientY / window.innerHeight) * 2 - 1;
+    setCoords({ x, y });
+  };
+
+  useEffect(() => {
+    const handleWinScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener("scroll", handleWinScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleWinScroll);
+  }, []);
+
+  // Helper to push history state and update URL
+  const navigateTo = (path: string) => {
+    if (window.location.pathname !== path) {
+      window.history.pushState(null, "", path);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }
+  };
+
+  const handleSelectStory = (story: Story | null) => {
+    setSelectedStory(story);
+    if (story) {
+      navigateTo(`/story/${story.slug}`);
+    } else {
+      navigateTo("/" + (activeTab === "authors" ? "about" : activeTab));
+    }
+  };
+
+  const handleTabChange = (tab: "3d" | "grid" | "list" | "authors" | "saved") => {
+    setActiveTab(tab);
+    navigateTo("/" + (tab === "authors" ? "about" : tab));
+  };
+
+  // URL Path router synchronization listener
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const path = window.location.pathname;
+      
+      if (path === "/" || path === "") {
+        setEntered(false);
+        setSelectedStory(null);
+      } else if (path === "/3d") {
+        setEntered(true);
+        setActiveTab("3d");
+        setSelectedStory(null);
+      } else if (path === "/grid") {
+        setEntered(true);
+        setActiveTab("grid");
+        setSelectedStory(null);
+      } else if (path === "/list") {
+        setEntered(true);
+        setActiveTab("list");
+        setSelectedStory(null);
+      } else if (path === "/about") {
+        setEntered(true);
+        setActiveTab("authors");
+        setSelectedStory(null);
+      } else if (path === "/saved") {
+        setEntered(true);
+        setActiveTab("saved");
+        setSelectedStory(null);
+      } else if (path.startsWith("/story/")) {
+        const slug = path.replace("/story/", "");
+        const found = stories.find(s => s.slug === slug);
+        if (found) {
+          setEntered(true);
+          setSelectedStory(found);
+        } else {
+          pendingSlugRef.current = slug;
+        }
+      }
+    };
+
+    window.addEventListener("popstate", handleUrlChange);
+    handleUrlChange();
+
+    return () => window.removeEventListener("popstate", handleUrlChange);
+  }, [stories]);
+
+  useEffect(() => {
+    if (pendingSlugRef.current && stories.length > 0) {
+      const found = stories.find(s => s.slug === pendingSlugRef.current);
+      if (found) {
+        setSelectedStory(found);
+        setEntered(true);
+        pendingSlugRef.current = null;
+      }
+    }
+  }, [stories]);
 
   // User Interaction State: Likes & Bookmarks saved to LocalStorage
   const [likedSlugs, setLikedSlugs] = useState<string[]>(() => {
@@ -197,7 +297,7 @@ export default function App() {
           if (aboutData.description) {
             setAboutInfo({
               description: aboutData.description,
-              officialWebsite: aboutData.officialWebsite || "https://farhankabir133.github.io/The-Ink-Home/"
+              officialWebsite: aboutData.officialWebsite || "https://theinkhome.live/"
             });
           }
         } else if (aboutRes === null) {
@@ -467,7 +567,11 @@ export default function App() {
     fetchInitialData();
   }, []);
 
-  // Set up Ambient Soundscape
+  // Set up Ambient Soundscape & Scroll Velocity tracking
+  const lastScrollY = useRef(0);
+  const lastScrollTime = useRef(Date.now());
+  const scrollVelocity = useRef(0);
+
   useEffect(() => {
     // Generate a beautiful, low-frequency cosmic synth tone as standard audio
     // helper so we don't have to pool heavy external audio files. 
@@ -486,26 +590,48 @@ export default function App() {
         osc.type = "sine";
         osc.frequency.setValueAtTime(55, audioContext.currentTime); // Low A hum
         
+        // Lowpass filter for deep acoustic reading atmosphere
+        const filter = audioContext.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(220, audioContext.currentTime);
+        filter.Q.setValueAtTime(1.0, audioContext.currentTime);
+
         // Soft volume to hold a gentle focus sound
         gainNode.gain.setValueAtTime(0.015, audioContext.currentTime);
         
-        // Add subtle harmonic modulation
+        // Add subtle low frequency LFO pitch modulation
         const lfo = audioContext.createOscillator();
         const lfoGain = audioContext.createGain();
         lfo.frequency.setValueAtTime(0.15, audioContext.currentTime); // Ultra slow rhythm
         lfoGain.gain.setValueAtTime(5, audioContext.currentTime);
         
+        // Secondary shimmer oscillator (higher pitch) that emerges only when scrolling
+        const shimmerOsc = audioContext.createOscillator();
+        shimmerOsc.type = "triangle";
+        shimmerOsc.frequency.setValueAtTime(440, audioContext.currentTime);
+        const shimmerGain = audioContext.createGain();
+        shimmerGain.gain.setValueAtTime(0.0, audioContext.currentTime); // Start silent
+
         lfo.connect(lfoGain);
         lfoGain.connect(osc.frequency);
         
-        osc.connect(gainNode);
+        osc.connect(filter);
+        shimmerOsc.connect(shimmerGain);
+        shimmerGain.connect(filter);
+        
+        filter.connect(gainNode);
         gainNode.connect(audioContext.destination);
         
         osc.start();
         lfo.start();
+        shimmerOsc.start();
         
+        (audioRef.current as any).audioContext = audioContext;
         (audioRef.current as any).oscillator = osc;
         (audioRef.current as any).lfo = lfo;
+        (audioRef.current as any).shimmerOsc = shimmerOsc;
+        (audioRef.current as any).shimmerGain = shimmerGain;
+        (audioRef.current as any).filter = filter;
         (audioRef.current as any).gainNode = gainNode;
       },
       pause: () => {
@@ -513,14 +639,77 @@ export default function App() {
           const ref = audioRef.current as any;
           if (ref.oscillator) ref.oscillator.stop();
           if (ref.lfo) ref.lfo.stop();
+          if (ref.shimmerOsc) ref.shimmerOsc.stop();
+          if (ref.audioContext) ref.audioContext.suspend();
         } catch (e) {}
       }
     } as any;
 
+    // Scroll tracker
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const currentTime = Date.now();
+      const dt = Math.max(currentTime - lastScrollTime.current, 10);
+      const dy = Math.abs(currentScrollY - lastScrollY.current);
+      
+      const velocity = dy / dt; // pixels per ms
+      scrollVelocity.current = Math.min(velocity, 5); // cap at reasonable speed
+      
+      lastScrollY.current = currentScrollY;
+      lastScrollTime.current = currentTime;
+    };
+
+    // Animation frame tick loop to decay scroll velocity smoothly and modulate audio
+    let animationFrameId: number;
+    let lastTickTime = Date.now();
+
+    const tick = () => {
+      const now = Date.now();
+      const dt = (now - lastTickTime) / 1000;
+      lastTickTime = now;
+
+      // Decay velocity
+      if (scrollVelocity.current > 0) {
+        scrollVelocity.current -= scrollVelocity.current * 3.5 * dt;
+        if (scrollVelocity.current < 0.001) scrollVelocity.current = 0;
+      }
+
+      // Modulate synth properties if running
+      const ref = audioRef.current as any;
+      if (ref && ref.audioContext && ref.audioContext.state === "running") {
+        const vel = scrollVelocity.current;
+        const curTime = ref.audioContext.currentTime;
+
+        // Modulate main filter frequency (up to 1800Hz)
+        const targetFilterFreq = 220 + vel * 320; // 220Hz -> ~1820Hz at max velocity
+        if (ref.filter) {
+          ref.filter.frequency.setTargetAtTime(targetFilterFreq, curTime, 0.12);
+          ref.filter.Q.setTargetAtTime(1.0 + vel * 2.0, curTime, 0.12);
+        }
+
+        // Modulate secondary shimmer volume & pitch based on velocity
+        if (ref.shimmerGain && ref.shimmerOsc) {
+          const targetShimmerVol = vel * 0.012; // max shimmer volume multiplier
+          ref.shimmerGain.gain.setTargetAtTime(targetShimmerVol, curTime, 0.15);
+
+          const targetShimmerFreq = 440 + vel * 80;
+          ref.shimmerOsc.frequency.setTargetAtTime(targetShimmerFreq, curTime, 0.18);
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    animationFrameId = requestAnimationFrame(tick);
+
     return () => {
+      window.removeEventListener("scroll", handleScroll);
+      cancelAnimationFrame(animationFrameId);
       try {
         const ref = audioRef.current as any;
         if (ref && ref.oscillator) ref.oscillator.stop();
+        if (ref && ref.shimmerOsc) ref.shimmerOsc.stop();
       } catch (e) {}
     };
   }, []);
@@ -537,6 +726,7 @@ export default function App() {
 
   const enterWebsite = () => {
     setEntered(true);
+    navigateTo("/" + (activeTab === "authors" ? "about" : activeTab));
     // Auto start the sound on entrance for premium cinematic audio feedback
     if (!musicPlaying) {
       try {
@@ -547,61 +737,102 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden selection:bg-cyan-500/30 selection:text-white">
+    <div 
+      data-atmosphere={bgMode}
+      className="relative min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden selection:bg-cyan-500/30 selection:text-white"
+    >
       
-      {/* Carbon Texture Overlays */}
+      {/* Carbon & Noise Texture Overlays */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.03] contrast-150 mix-blend-overlay carbon-texture z-[2]" />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.02] noise-overlay z-[2]" />
       
-      {/* Minimal Ambient Cyan and Indigo lighting glows */}
-      <div className="absolute top-[-10%) right-[-10%] w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[140px] pointer-events-none z-[1]" />
-      <div className="absolute bottom-[20%] left-[-10%] w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-[140px] pointer-events-none z-[1]" />
+      {/* Minimal Ambient lighting glows dynamic wrapper */}
+      <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[140px] pointer-events-none z-[1] transition-all duration-1000" />
+      <div className="absolute bottom-[20%] left-[-10%] w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-[140px] pointer-events-none z-[1] transition-all duration-1000" />
 
       {/* 3D Cosmic Constellation Scene */}
-      <ThreeBackground mode={bgMode} activeTab={activeTab} />
+      <Suspense fallback={null}>
+        <ThreeBackground mode={bgMode} activeTab={selectedStory ? "story" : activeTab} />
+      </Suspense>
 
       {/* Floating Atmosphere Customizer Deck */}
       <div 
-        className="fixed bottom-6 left-6 z-40 flex items-center gap-1.5 p-1 bg-[#111111]/90 border border-white/10 text-[9px] sm:text-[10px] font-mono uppercase tracking-wider backdrop-blur-md rounded shadow-lg shadow-black/80"
+        className="fixed bottom-6 left-6 z-40 flex items-center gap-1.5 p-1 bg-black/60 border border-white/10 rounded-full text-[9px] sm:text-[10px] font-mono uppercase tracking-wider backdrop-blur-xl shadow-2xl transition-all duration-300 hover:border-[var(--glow-text)]/40"
         id="atmosphere-deck"
       >
-        <span className="hidden md:inline-block px-1.5 text-slate-500 font-bold select-none text-[9px] uppercase tracking-widest pl-2">Atmosphere:</span>
+        <span className="hidden md:inline-block px-2 text-slate-500 font-bold select-none text-[9px] uppercase tracking-widest pl-2.5">Atmosphere:</span>
         <button
           onClick={() => setBgMode("stellar")}
-          className={`px-2 py-1 transition-all cursor-pointer ${bgMode === "stellar" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-cyan-400"}`}
+          className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
+            bgMode === "stellar" 
+              ? "bg-[#06b6d4] text-black font-extrabold shadow-[0_0_12px_rgba(6,182,212,0.4)]" 
+              : "text-slate-400 hover:text-[#06b6d4]"
+          }`}
           title="Stellar Universe Node"
         >
-          🌌 Cosmic
+          <span className={`w-1 h-1 rounded-full bg-cyan-400 ${bgMode === "stellar" ? "bg-black animate-pulse" : ""}`} />
+          Cosmic
         </button>
         <button
           onClick={() => setBgMode("ink")}
-          className={`px-2 py-1 transition-all cursor-pointer ${bgMode === "ink" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-cyan-400"}`}
+          className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
+            bgMode === "ink" 
+              ? "bg-[#6366f1] text-black font-extrabold shadow-[0_0_12px_rgba(99,102,241,0.4)]" 
+              : "text-slate-400 hover:text-[#6366f1]"
+          }`}
           title="Flowing Writer's Ink"
         >
-          ✒️ Ink
+          <span className={`w-1 h-1 rounded-full bg-indigo-400 ${bgMode === "ink" ? "bg-black animate-pulse" : ""}`} />
+          Ink
         </button>
         <button
           onClick={() => setBgMode("forest")}
-          className={`px-2 py-1 transition-all cursor-pointer ${bgMode === "forest" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-cyan-400"}`}
+          className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
+            bgMode === "forest" 
+              ? "bg-[#f59e0b] text-black font-extrabold shadow-[0_0_12px_rgba(245,158,11,0.4)]" 
+              : "text-slate-400 hover:text-[#f59e0b]"
+          }`}
           title="Cozy Forest Cabin Embers"
         >
-          🌲 Cabin
+          <span className={`w-1 h-1 rounded-full bg-amber-400 ${bgMode === "forest" ? "bg-black animate-pulse" : ""}`} />
+          Cabin
         </button>
         <button
           onClick={() => setBgMode("constellation")}
-          className={`px-2 py-1 transition-all cursor-pointer ${bgMode === "constellation" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-teal-400"}`}
+          className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
+            bgMode === "constellation" 
+              ? "bg-[#10b981] text-black font-extrabold shadow-[0_0_12px_rgba(16,185,129,0.4)]" 
+              : "text-slate-400 hover:text-[#10b981]"
+          }`}
           title="Thought Constellations Network"
         >
-          🕸️ Neural
+          <span className={`w-1 h-1 rounded-full bg-emerald-400 ${bgMode === "constellation" ? "bg-black animate-pulse" : ""}`} />
+          Neural
         </button>
       </div>
 
       {/* Floating Sound Controller */}
       <button 
         onClick={handleToggleSound}
-        className="fixed bottom-6 right-6 z-40 p-3 rounded bg-[#111111] hover:bg-[#1a1a1a] border border-white/10 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all backdrop-blur-md cursor-pointer"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-3 py-2.5 bg-black/60 hover:bg-black/85 border border-white/10 hover:border-[var(--glow-text)]/40 rounded-full text-[10px] font-mono uppercase tracking-widest text-slate-400 hover:text-white transition-all backdrop-blur-xl cursor-pointer shadow-2xl hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]"
         title={musicPlaying ? "Mute Cosmic Hum" : "Unmute Cosmic Hum"}
       >
-        {musicPlaying ? <Volume2 className="w-4 h-4 text-cyan-400 animate-pulse" /> : <VolumeX className="w-4 h-4" />}
+        {musicPlaying ? (
+          <>
+            <div className="sound-wave-container">
+              <span className="sound-wave-bar" />
+              <span className="sound-wave-bar" />
+              <span className="sound-wave-bar" />
+              <span className="sound-wave-bar" />
+            </div>
+            <span className="text-[9px] text-[var(--glow-text)] atmosphere-text pr-1 font-bold">AMBIENT</span>
+          </>
+        ) : (
+          <>
+            <VolumeX className="w-3.5 h-3.5" />
+            <span className="text-[9px] pr-1">MUTED</span>
+          </>
+        )}
       </button>
 
       <AnimatePresence mode="wait">
@@ -614,6 +845,7 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: -40 }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
+            onMouseMove={handleMouseMove}
             className="relative min-h-screen flex flex-col justify-between z-10 px-6 py-8"
           >
             {/* Top Logotype Row */}
@@ -644,10 +876,17 @@ export default function App() {
                 <div className="inline-block px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[10px] font-bold tracking-[0.2em] text-cyan-400 uppercase">
                   Featured Edition — Vol. 082
                 </div>
-                
-                {/* Main Heading title with custom gradient styling */}
-                <h1 className="text-6xl md:text-8xl lg:text-[110px] leading-[0.85] font-black tracking-tighter mb-6 italic uppercase font-display text-white">
-                  The Ink<br /><span className="text-cyan-500">Home</span>
+                {/* Main Heading title with custom gradient styling and 3D kinetic interaction */}
+                <h1 
+                  style={{
+                    letterSpacing: `${-0.05 + Math.abs(coords.x) * 0.03}em`,
+                    transform: `perspective(1000px) rotateY(${coords.x * 12}deg) rotateX(${-coords.y * 12}deg) translateY(${scrollY * -0.1}px)`,
+                    textShadow: `${-coords.x * 12}px ${-coords.y * 12}px 24px var(--glow-color)`,
+                    transition: "transform 0.08s ease-out, letter-spacing 0.15s ease-out, text-shadow 0.15s ease-out"
+                  }}
+                  className="text-6xl md:text-8xl lg:text-[110px] leading-[0.85] font-black tracking-tighter mb-6 italic uppercase font-display bg-gradient-to-r from-white via-cyan-400 to-indigo-400 bg-clip-text text-transparent select-none"
+                >
+                  The Ink<br />Home
                 </h1>
                 
                 {/* Subtitle statement */}
@@ -655,7 +894,7 @@ export default function App() {
                   Where spatial typography, code shaders, and cyber-philosophical stories merge into floating geometric objects in space.
                 </p>
               </motion.div>
-
+ 
               {/* Enter CTA Trigger BUTTON */}
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
@@ -664,7 +903,7 @@ export default function App() {
               >
                 <button
                   onClick={enterWebsite}
-                  className="px-8 py-4 bg-white text-black font-extrabold uppercase tracking-[0.2em] text-[11px] hover:bg-cyan-400 transition-colors duration-300 cursor-pointer flex items-center gap-2.5 z-20 mx-auto"
+                  className="px-8 py-4 bg-white text-black font-extrabold uppercase tracking-[0.2em] text-[11px] hover:bg-cyan-500 hover:scale-102 hover:shadow-[0_0_35px_rgba(6,182,212,0.5)] transition-all duration-300 cursor-pointer flex items-center gap-2.5 z-20 mx-auto"
                   id="enter-portal-btn"
                 >
                   Enter The Ink Home
@@ -703,6 +942,7 @@ export default function App() {
                           onClick={() => {
                             setSelectedStory(story);
                             setEntered(true);
+                            navigateTo(`/story/${story.slug}`);
                           }}
                           className="inline-flex items-center gap-3 px-4 py-2 border border-white/5 hover:border-cyan-500/30 hover:bg-white/[0.02] transition-all cursor-pointer text-left"
                         >
@@ -739,65 +979,78 @@ export default function App() {
             className="relative z-10 flex flex-col min-h-screen bg-[#050505]"
           >
             {/* Top Workspace Header */}
-            <header className="sticky top-0 z-30 w-full border-b border-white/10 bg-[#050505]/95 backdrop-blur-xl">
-              <div className="flex items-center justify-between max-w-7xl mx-auto px-6 h-20">
+            <header className="sticky top-0 md:top-4 md:mt-4 z-30 w-full md:max-w-6xl md:mx-auto border-b md:border border-white/10 bg-[#050505]/95 md:bg-black/60 backdrop-blur-xl md:rounded-full transition-all duration-300 md:shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+              <div className="flex items-center justify-between px-6 h-16 md:h-16">
                 
                 {/* Brand Logo Wordmark */}
                 <div 
-                  onClick={() => setEntered(false)} 
+                  onClick={() => {
+                    setEntered(false);
+                    navigateTo("/");
+                  }} 
                   className="flex items-center cursor-pointer group"
                 >
-                  <Logo size={42} />
+                  <Logo size={36} />
                 </div>
 
                  {/* Dashboard Mode view buttons */}
-                <nav className="hidden md:flex items-center gap-1.5 p-1 bg-[#111111] border border-white/10 text-[11px] font-mono uppercase">
+                <nav className="hidden md:flex items-center gap-1 p-0.5 bg-white/[0.03] border border-white/5 rounded-full text-[10px] font-mono uppercase">
                   <button
-                    onClick={() => setActiveTab("3d")}
-                    className={`flex items-center gap-1.5 px-4 py-2 transition-all cursor-pointer ${
-                      activeTab === "3d" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-white"
+                    onClick={() => handleTabChange("3d")}
+                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+                      activeTab === "3d" 
+                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
-                    <Compass className="w-3.5 h-3.5" />
+                    <Compass className="w-3 h-3" />
                     3D Universe
                   </button>
                   <button
-                    onClick={() => setActiveTab("grid")}
-                    className={`flex items-center gap-1.5 px-4 py-2 transition-all cursor-pointer ${
-                      activeTab === "grid" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-white"
+                    onClick={() => handleTabChange("grid")}
+                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+                      activeTab === "grid" 
+                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
-                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <LayoutGrid className="w-3 h-3" />
                     Bento Grid
                   </button>
                   <button
-                    onClick={() => setActiveTab("list")}
-                    className={`flex items-center gap-1.5 px-4 py-2 transition-all cursor-pointer ${
-                      activeTab === "list" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-white"
+                    onClick={() => handleTabChange("list")}
+                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+                      activeTab === "list" 
+                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
-                    <AlignLeft className="w-3.5 h-3.5" />
+                    <AlignLeft className="w-3 h-3" />
                     Ledger List
                   </button>
                   <button
-                    onClick={() => setActiveTab("authors")}
-                    className={`flex items-center gap-1.5 px-4 py-2 transition-all cursor-pointer ${
-                      activeTab === "authors" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-white"
+                    onClick={() => handleTabChange("authors")}
+                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+                      activeTab === "authors" 
+                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
-                    <Users className="w-3.5 h-3.5" />
+                    <Users className="w-3 h-3" />
                     About Us
                   </button>
                   <button
-                    onClick={() => setActiveTab("saved")}
-                    className={`flex items-center gap-1.5 px-4 py-2 transition-all cursor-pointer relative ${
-                      activeTab === "saved" ? "bg-white text-black font-extrabold" : "text-slate-400 hover:text-white"
+                    onClick={() => handleTabChange("saved")}
+                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer relative ${
+                      activeTab === "saved" 
+                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
-                    <Bookmark className="w-3.5 h-3.5" />
-                    Saved Archive
+                    <Bookmark className="w-3 h-3" />
+                    Saved
                     {savedSlugs.length > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-cyan-500 text-[9px] font-bold text-black font-mono">
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--glow-text)] text-[9px] font-bold text-black font-mono shadow-[0_0_8px_var(--glow-color)]">
                         {savedSlugs.length}
                       </span>
                     )}
@@ -810,61 +1063,66 @@ export default function App() {
                     href="https://medium.com/the-ink-home"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-4 py-2 font-mono text-[10px] uppercase tracking-widest bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-full font-mono text-[9px] uppercase tracking-widest bg-[var(--glow-text)]/10 border border-[var(--glow-text)]/30 text-[var(--glow-text)] hover:bg-[var(--glow-text)]/20 transition-all cursor-pointer"
                   >
                     Medium
-                    <ExternalLink className="w-3 h-3 text-cyan-400" />
+                    <ExternalLink className="w-3 h-3 text-[var(--glow-text)]" />
                   </a>
                 </div>
               </div>
 
-              {/* Mobile Tab selector fallback */}
-              <div className="flex md:hidden border-t border-white/10 bg-[#0d0d0d]">
-                <div className="grid grid-cols-5 w-full text-center text-[10px] font-mono leading-none">
+              {/* Mobile Floating Tab selector */}
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-sm md:hidden rounded-full border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl p-1">
+                <div className="flex justify-around items-center text-[9px] font-mono leading-none">
                   <button
-                    onClick={() => setActiveTab("3d")}
-                    className={`py-4 border-r border-white/10 flex flex-col items-center gap-1 ${
-                      activeTab === "3d" ? "text-cyan-400 bg-white/5 font-extrabold" : "text-slate-400"
+                    onClick={() => handleTabChange("3d")}
+                    className={`py-2 px-3 rounded-full flex flex-col items-center gap-0.5 transition-all ${
+                      activeTab === "3d" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
                     }`}
                   >
                     <Compass className="w-3.5 h-3.5" />
                     3D
                   </button>
                   <button
-                    onClick={() => setActiveTab("grid")}
-                    className={`py-4 border-r border-white/10 flex flex-col items-center gap-1 ${
-                      activeTab === "grid" ? "text-cyan-400 bg-white/5 font-extrabold" : "text-slate-400"
+                    onClick={() => handleTabChange("grid")}
+                    className={`py-2 px-3 rounded-full flex flex-col items-center gap-0.5 transition-all ${
+                      activeTab === "grid" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
                     }`}
                   >
                     <LayoutGrid className="w-3.5 h-3.5" />
                     Bento
                   </button>
                   <button
-                    onClick={() => setActiveTab("list")}
-                    className={`py-4 border-r border-white/10 flex flex-col items-center gap-1 ${
-                      activeTab === "list" ? "text-cyan-400 bg-white/5 font-extrabold" : "text-slate-400"
+                    onClick={() => handleTabChange("list")}
+                    className={`py-2 px-3 rounded-full flex flex-col items-center gap-0.5 transition-all ${
+                      activeTab === "list" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
                     }`}
                   >
                     <AlignLeft className="w-3.5 h-3.5" />
                     List
                   </button>
                   <button
-                    onClick={() => setActiveTab("authors")}
-                    className={`py-4 border-r border-white/10 flex flex-col items-center gap-1 ${
-                      activeTab === "authors" ? "text-cyan-400 bg-white/5 font-extrabold" : "text-slate-400"
+                    onClick={() => handleTabChange("authors")}
+                    className={`py-2 px-3 rounded-full flex flex-col items-center gap-0.5 transition-all ${
+                      activeTab === "authors" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
                     }`}
                   >
                     <Users className="w-3.5 h-3.5" />
-                    About Us
+                    About
                   </button>
                   <button
-                    onClick={() => setActiveTab("saved")}
-                    className={`py-4 flex flex-col items-center gap-1 ${
-                      activeTab === "saved" ? "text-cyan-400 bg-white/5 font-extrabold" : "text-slate-400"
+                    onClick={() => handleTabChange("saved")}
+                    className={`py-2 px-3 rounded-full flex flex-col items-center gap-0.5 transition-all relative ${
+                      activeTab === "saved" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
                     }`}
                   >
                     <Bookmark className="w-3.5 h-3.5" />
                     Saved
+                    {savedSlugs.length > 0 && (
+                      <span className="absolute top-1 right-2 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--glow-text)] text-[8px] font-bold text-black font-mono shadow-[0_0_6px_var(--glow-color)]">
+                        {savedSlugs.length}
+                      </span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -945,14 +1203,21 @@ export default function App() {
                           exit={{ opacity: 0 }}
                           transition={{ duration: 0.4 }}
                         >
-                          <Carousel3D 
-                            stories={stories} 
-                            onSelectStory={setSelectedStory} 
-                            likedSlugs={likedSlugs}
-                            savedSlugs={savedSlugs}
-                            onToggleLike={handleToggleLike}
-                            onToggleSave={handleToggleSave}
-                          />
+                          <Suspense fallback={
+                            <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-3">
+                              <div className="w-8 h-8 border border-t-cyan-400 rounded-full animate-spin" />
+                              <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase">Constructing 3D Space...</span>
+                            </div>
+                          }>
+                            <Carousel3D 
+                              stories={stories} 
+                              onSelectStory={handleSelectStory} 
+                              likedSlugs={likedSlugs}
+                              savedSlugs={savedSlugs}
+                              onToggleLike={handleToggleLike}
+                              onToggleSave={handleToggleSave}
+                            />
+                          </Suspense>
                         </motion.div>
                       )}
                       
@@ -966,7 +1231,7 @@ export default function App() {
                         >
                           <StoryGrid 
                             stories={stories} 
-                            onSelectStory={setSelectedStory} 
+                            onSelectStory={handleSelectStory} 
                             likedSlugs={likedSlugs}
                             savedSlugs={savedSlugs}
                             onToggleLike={handleToggleLike}
@@ -985,7 +1250,7 @@ export default function App() {
                         >
                           <StoryList 
                             stories={stories} 
-                            onSelectStory={setSelectedStory} 
+                            onSelectStory={handleSelectStory} 
                             likedSlugs={likedSlugs}
                             savedSlugs={savedSlugs}
                             onToggleLike={handleToggleLike}
@@ -1002,7 +1267,7 @@ export default function App() {
                           exit={{ opacity: 0 }}
                           transition={{ duration: 0.4 }}
                         >
-                          <AuthorsSection stories={stories} onSelectStory={setSelectedStory} editors={editors} writers={writers} aboutInfo={aboutInfo} />
+                          <AuthorsSection stories={stories} onSelectStory={handleSelectStory} editors={editors} writers={writers} aboutInfo={aboutInfo} />
                         </motion.div>
                       )}
 
@@ -1022,7 +1287,7 @@ export default function App() {
                                 Connect to the 3D Universe or Bento Grid, find stories that challenge your cognitive horizons, and click their save trigger to register them here.
                               </p>
                               <button
-                                onClick={() => setActiveTab("3d")}
+                                onClick={() => handleTabChange("3d")}
                                 className="px-5 py-2 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500 hover:text-black font-mono text-[10px] uppercase tracking-widest transition-colors font-bold cursor-pointer"
                               >
                                 Explore Cosmos
@@ -1031,7 +1296,7 @@ export default function App() {
                           ) : (
                             <StoryGrid 
                               stories={stories.filter(s => savedSlugs.includes(s.slug))} 
-                              onSelectStory={setSelectedStory}
+                              onSelectStory={handleSelectStory}
                               likedSlugs={likedSlugs}
                               savedSlugs={savedSlugs}
                               onToggleLike={handleToggleLike}
@@ -1084,7 +1349,7 @@ export default function App() {
                   {/* Dynamic full-width Editorial Board view below standard carousel/grid/list layouts to enrich experience */}
                   {activeTab !== "authors" && (
                     <div className="pt-8 pb-12 border-t border-white/10">
-                      <AuthorsSection stories={stories} onSelectStory={setSelectedStory} editors={editors} writers={writers} aboutInfo={aboutInfo} />
+                      <AuthorsSection stories={stories} onSelectStory={handleSelectStory} editors={editors} writers={writers} aboutInfo={aboutInfo} />
                     </div>
                   )}
 
@@ -1094,7 +1359,7 @@ export default function App() {
             </main>
 
             {/* General Site Footer */}
-            <footer className="w-full border-t border-white/10 bg-[#070707] py-16 flex flex-col items-center justify-center space-y-4 text-center text-[10px] text-slate-500 font-mono uppercase tracking-[0.2em] mt-12">
+            <footer className="w-full border-t border-white/10 bg-[#070707] pt-16 pb-28 md:pb-16 flex flex-col items-center justify-center space-y-4 text-center text-[10px] text-slate-500 font-mono uppercase tracking-[0.2em] mt-12">
               <Logo size={48} iconOnly className="opacity-80 hover:opacity-100 transition-opacity" />
               <div className="space-y-1">
                 <span className="block text-slate-400">The Ink Home © 2026</span>
@@ -1109,7 +1374,7 @@ export default function App() {
       {/* Volumetric Story Modal Popup */}
       <StoryModal 
         story={selectedStory} 
-        onClose={() => setSelectedStory(null)} 
+        onClose={() => handleSelectStory(null)} 
         isLiked={selectedStory ? likedSlugs.includes(selectedStory.slug) : false}
         isSaved={selectedStory ? savedSlugs.includes(selectedStory.slug) : false}
         onToggleLike={handleToggleLike}

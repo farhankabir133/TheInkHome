@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import DOMPurify from "isomorphic-dompurify";
 import { Story } from "../types";
 import { 
   X, 
@@ -100,20 +101,20 @@ export default function StoryModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: "spring", stiffness: 220, damping: 22 }}
-          className="relative w-full max-w-4xl bg-[#050505] border border-white/10 rounded-none shadow-2xl flex flex-col max-h-[88vh] overflow-hidden z-10"
+          className="relative w-full max-w-4xl bg-[#050505]/95 border border-white/5 rounded-none shadow-2xl flex flex-col max-h-[88vh] overflow-hidden z-10 glass-card"
         >
           {/* Header Action Row */}
           <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
             <button
               onClick={handleShare}
-              className="p-2.5 bg-[#111111] hover:bg-[#1a1a1a] border border-white/10 text-slate-300 hover:text-cyan-400 transition-all cursor-pointer"
+              className="p-2.5 bg-black/60 backdrop-blur-md hover:bg-white/[0.05] border border-white/5 rounded-full text-slate-300 hover:text-[var(--glow-text)] hover:shadow-[0_0_12px_var(--glow-bg)] transition-all cursor-pointer"
               title="Share story"
             >
               <Share2 className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="p-2.5 bg-[#111111] hover:bg-[#1a1a1a] border border-white/10 text-slate-300 hover:text-cyan-400 transition-all cursor-pointer"
+              className="p-2.5 bg-black/60 backdrop-blur-md hover:bg-white/[0.05] border border-white/5 rounded-full text-slate-300 hover:text-[var(--glow-text)] hover:shadow-[0_0_12px_var(--glow-bg)] transition-all cursor-pointer"
               aria-label="Close portal"
               id="close-modal-btn"
             >
@@ -125,7 +126,7 @@ export default function StoryModal({
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             
             {/* Hero Cover Frame */}
-            <div className="relative w-full h-[22rem] md:h-[26rem] overflow-hidden">
+            <div className="relative w-full h-[20rem] md:h-[25rem] overflow-hidden">
               <img
                 src={story.cover}
                 alt={story.title}
@@ -141,7 +142,7 @@ export default function StoryModal({
                   {story.categories.map((cat) => (
                     <span
                       key={cat}
-                      className="px-2.5 py-1 rounded-none font-mono text-[9px] uppercase tracking-wider bg-cyan-950 text-cyan-400 border border-cyan-500/20"
+                      className="px-2.5 py-1 rounded-none font-mono text-[9px] uppercase tracking-wider bg-black/80 text-[var(--glow-text)] border border-[var(--glow-text)]/20"
                     >
                       {cat}
                     </span>
@@ -158,23 +159,23 @@ export default function StoryModal({
             {/* Main Editorial Copy */}
             <div className="p-6 md:p-10 space-y-8 max-w-3xl mx-auto">
               {/* Author Card Row */}
-              <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-[#111111] border border-white/10 rounded-none font-mono text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-none font-mono text-xs">
                 <div className="flex items-center gap-3">
                   <AvatarImage
                     src={story.avatar}
                     alt={story.author}
                     fallbackSrc="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"
-                    className="w-9 h-9 rounded-none object-cover border border-cyan-500/20"
+                    className="w-9 h-9 rounded-none object-cover border border-white/5"
                   />
                   <div>
                     <h4 className="font-sans font-bold text-white uppercase tracking-wider">{story.author}</h4>
-                    <p className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase mt-0.5">{story.role}</p>
+                    <p className="text-[10px] text-[var(--glow-text)] font-mono tracking-widest uppercase mt-0.5">{story.role}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4 text-slate-400">
                   <span className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                    <Calendar className="w-3.5 h-3.5 text-[var(--glow-text)]" />
                     {new Date(story.pubDate).toLocaleDateString("en-US", {
                       month: "long",
                       day: "numeric",
@@ -185,28 +186,28 @@ export default function StoryModal({
               </div>
 
               {/* Interactions Toolbar: Likes, Saves, and Social Sharing Suite */}
-              <div className="flex flex-wrap items-center justify-between gap-4 py-3 px-4 border-l-2 border-cyan-500 bg-[#0c0c0c]/80 border-t border-b border-r border-white/10 font-mono text-xs text-slate-400">
+              <div className="flex flex-wrap items-center justify-between gap-4 py-3 px-4 border-l-2 border-[var(--glow-text)] bg-white/[0.02] border-t border-b border-r border-white/5 font-mono text-xs text-slate-400">
                 {/* Left: Like & Save triggers */}
                 <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
                   <button
                     onClick={() => onToggleLike(story.slug)}
-                    className={`flex items-center gap-2 px-3 py-1.5 border border-white/10 hover:border-cyan-500/50 hover:text-cyan-400 hover:bg-cyan-950/20 transition-all cursor-pointer ${
-                      isLiked ? "text-cyan-400 border-cyan-500/40 bg-cyan-950/20 font-bold" : ""
+                    className={`flex items-center gap-2 px-3 py-1.5 border border-white/5 hover:border-[var(--glow-text)]/50 hover:text-[var(--glow-text)] hover:bg-[var(--glow-text)]/10 transition-all cursor-pointer rounded-full ${
+                      isLiked ? "text-[var(--glow-text)] border-[var(--glow-text)]/30 bg-[var(--glow-text)]/10 font-bold" : ""
                     }`}
                     title={isLiked ? "Unlike story" : "Like story"}
                   >
-                    <Heart className={`w-4 h-4 ${isLiked ? "fill-current text-cyan-400" : ""}`} />
+                    <Heart className={`w-4 h-4 ${isLiked ? "fill-current text-[var(--glow-text)]" : ""}`} />
                     <span>{getLikesCount(story.title, isLiked)} Likes</span>
                   </button>
 
                   <button
                     onClick={() => onToggleSave(story.slug)}
-                    className={`flex items-center gap-2 px-3 py-1.5 border border-white/10 hover:border-cyan-500/50 hover:text-cyan-400 hover:bg-cyan-950/20 transition-all cursor-pointer ${
-                      isSaved ? "text-cyan-400 border-cyan-500/40 bg-cyan-950/20 font-bold" : ""
+                    className={`flex items-center gap-2 px-3 py-1.5 border border-white/5 hover:border-[var(--glow-text)]/50 hover:text-[var(--glow-text)] hover:bg-[var(--glow-text)]/10 transition-all cursor-pointer rounded-full ${
+                      isSaved ? "text-[var(--glow-text)] border-[var(--glow-text)]/30 bg-[var(--glow-text)]/10 font-bold" : ""
                     }`}
                     title={isSaved ? "Remove from saved archive" : "Save to library archive"}
                   >
-                    <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current text-cyan-400" : ""}`} />
+                    <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current text-[var(--glow-text)]" : ""}`} />
                     <span>{isSaved ? "Saved" : "Save Story"}</span>
                   </button>
                 </div>
@@ -219,7 +220,7 @@ export default function StoryModal({
                     href={getShareUrl("twitter", story.title, story.link)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 bg-[#111111] hover:bg-[#1a1a1a] border border-white/10 hover:border-cyan-500/50 text-slate-400 hover:text-cyan-400 transition-all cursor-pointer"
+                    className="p-1.5 bg-black/40 hover:bg-[var(--glow-text)]/10 border border-white/5 hover:border-[var(--glow-text)]/30 text-slate-400 hover:text-[var(--glow-text)] transition-all cursor-pointer rounded-full"
                     title="Transmit on X"
                   >
                     <Twitter className="w-3.5 h-3.5" />
@@ -229,7 +230,7 @@ export default function StoryModal({
                     href={getShareUrl("linkedin", story.title, story.link)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 bg-[#111111] hover:bg-[#1a1a1a] border border-white/10 hover:border-cyan-500/50 text-slate-400 hover:text-cyan-400 transition-all cursor-pointer"
+                    className="p-1.5 bg-black/40 hover:bg-[var(--glow-text)]/10 border border-white/5 hover:border-[var(--glow-text)]/30 text-slate-400 hover:text-[var(--glow-text)] transition-all cursor-pointer rounded-full"
                     title="Share on LinkedIn"
                   >
                     <Linkedin className="w-3.5 h-3.5" />
@@ -239,7 +240,7 @@ export default function StoryModal({
                     href={getShareUrl("facebook", story.title, story.link)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 bg-[#111111] hover:bg-[#1a1a1a] border border-white/10 hover:border-cyan-500/50 text-slate-400 hover:text-cyan-400 transition-all cursor-pointer"
+                    className="p-1.5 bg-black/40 hover:bg-[var(--glow-text)]/10 border border-white/5 hover:border-[var(--glow-text)]/30 text-slate-400 hover:text-[var(--glow-text)] transition-all cursor-pointer rounded-full"
                     title="Share on Facebook"
                   >
                     <Facebook className="w-3.5 h-3.5" />
@@ -247,13 +248,13 @@ export default function StoryModal({
 
                   <button
                     onClick={handleCopyLink}
-                    className="p-1.5 bg-[#111111] hover:bg-[#1a1a1a] border border-white/10 hover:border-cyan-500/50 text-slate-400 hover:text-cyan-400 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    className="p-1.5 bg-black/40 hover:bg-[var(--glow-text)]/10 border border-white/5 hover:border-[var(--glow-text)]/30 text-slate-400 hover:text-[var(--glow-text)] transition-all cursor-pointer flex items-center justify-center gap-1.5 rounded-full"
                     title="Copy direct portal link"
                   >
                     {copied ? (
                       <>
-                        <Check className="w-3.5 h-3.5 text-cyan-400" />
-                        <span className="text-[9px] text-cyan-400 uppercase font-bold pr-1">Copied!</span>
+                        <Check className="w-3.5 h-3.5 text-[var(--glow-text)]" />
+                        <span className="text-[9px] text-[var(--glow-text)] uppercase font-bold pr-1">Copied!</span>
                       </>
                     ) : (
                       <Link className="w-3.5 h-3.5" />
@@ -268,10 +269,10 @@ export default function StoryModal({
                   className="prose prose-invert prose-cyan max-w-none text-slate-300 leading-relaxed text-sm md:text-base space-y-5
                   prose-headings:font-sans prose-headings:font-semibold prose-headings:text-white prose-headings:tracking-tight
                   prose-p:mb-4 prose-p:leading-relaxed
-                  prose-figure:my-6 prose-figure:rounded-none prose-figure:overflow-hidden prose-figure:border prose-figure:border-white/10
+                  prose-figure:my-6 prose-figure:rounded-none prose-figure:overflow-hidden prose-figure:border prose-figure:border-white/5
                   prose-img:rounded-none prose-img:w-full prose-img:object-cover
-                  prose-a:text-cyan-400 prose-a:underline hover:prose-a:text-cyan-300 transition-colors"
-                  dangerouslySetInnerHTML={{ __html: story.content }}
+                  prose-a:text-[var(--glow-text)] prose-a:underline hover:prose-a:text-white transition-colors"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(story.content) }}
                 />
               ) : (
                 <div className="space-y-4">
@@ -281,13 +282,13 @@ export default function StoryModal({
               )}
 
               {/* Divider */}
-              <div className="w-full h-px bg-white/10 my-8" />
+              <div className="w-full h-px bg-white/5 my-8" />
 
               {/* Call to Action: Read on Medium */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-[#0c0c0c] border border-white/10 rounded-none text-center sm:text-left">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-white/[0.02] border border-white/5 rounded-none text-center sm:text-left">
                 <div className="space-y-1">
                   <h4 className="font-sans text-sm font-semibold text-white flex items-center justify-center sm:justify-start gap-1 uppercase">
-                    <Compass className="w-4 h-4 text-cyan-400" />
+                    <Compass className="w-4 h-4 text-[var(--glow-text)]" />
                     Enjoying this piece from The Ink Home?
                   </h4>
                   <p className="text-xs text-slate-400">
@@ -299,7 +300,7 @@ export default function StoryModal({
                   href={story.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-5 py-2.5 bg-white text-black font-extrabold uppercase tracking-widest text-[11px] hover:bg-cyan-400 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-5 py-2.5 bg-white text-black font-extrabold uppercase tracking-widest text-[11px] hover:bg-[var(--glow-text)] hover:shadow-[0_0_15px_var(--glow-color)] transition-all cursor-pointer rounded-full"
                 >
                   Medium Article
                   <ExternalLink className="w-3.5 h-3.5" />

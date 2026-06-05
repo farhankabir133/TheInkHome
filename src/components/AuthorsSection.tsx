@@ -36,7 +36,7 @@ export default function AuthorsSection({
 
   // Default fallback values if props are not yet loaded
   const pubDescription = aboutInfo?.description || "The Ink Home is a place where words feel at home. Here, we share stories that explore life, writing, technology, productivity, relationships and mental health. Every piece is a reflection, a lesson, or a moment meant to inspire, connect, and spark thought.";
-  const pubWebsite = aboutInfo?.officialWebsite || "https://farhankabir133.github.io/The-Ink-Home/";
+  const pubWebsite = aboutInfo?.officialWebsite || "https://theinkhome.live/";
 
   // 1. Map Editors strictly from props list
   const finalEditors = useMemo(() => {

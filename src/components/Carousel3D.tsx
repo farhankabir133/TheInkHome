@@ -27,6 +27,16 @@ export default function Carousel3D({
   const dragStartX = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [autoplay, setAutoplay] = useState(true);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isMobile = windowWidth < 640;
+  const isTablet = windowWidth >= 640 && windowWidth < 1024;
 
   // Autoplay loop
   useEffect(() => {
@@ -91,7 +101,7 @@ export default function Carousel3D({
       {/* Perspective Container */}
       <div 
         ref={containerRef}
-        className="relative flex items-center justify-center w-full h-[32rem] overflow-visible cursor-grab active:cursor-grabbing touch-none px-4"
+        className="relative flex items-center justify-center w-full h-[28rem] sm:h-[32rem] overflow-visible cursor-grab active:cursor-grabbing touch-none px-4"
         style={{ perspective: "1000px" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -116,17 +126,45 @@ export default function Carousel3D({
             // Render only items in proximity
             if (absOffset > 2) return null;
 
-            // Compute custom custom spatial translations
-            const rotateY = offset * -32; // Inward angle rotation
-            const translateX = offset * 130; // X offset gap
-            const translateZ = absOffset * -150; // Deep spatial Z retreat
-            const scale = 1 - absOffset * 0.15; // Depth scaling
-            const opacity = 1 - absOffset * 0.35; // Depth fog fade
+            // Calculate distinct, viewport-aware spatial coordinates
+            let rotateY = offset * -32;
+            let translateX = offset * 130;
+            let translateZ = absOffset * -150;
+            let scale = 1 - absOffset * 0.15;
+            let opacity = 1 - absOffset * 0.35;
+
+            if (isMobile) {
+              rotateY = offset * -15;
+              translateX = offset * 65;
+              translateZ = absOffset * -80;
+              scale = 1 - absOffset * 0.12;
+              opacity = 1 - absOffset * 0.55;
+            } else if (isTablet) {
+              rotateY = offset * -24;
+              translateX = offset * 100;
+              translateZ = absOffset * -110;
+              scale = 1 - absOffset * 0.14;
+              opacity = 1 - absOffset * 0.45;
+            } else if (windowWidth >= 1024 && windowWidth < 1440) {
+              // Desktop (1024-1440)
+              rotateY = offset * -28;
+              translateX = offset * 125;
+              translateZ = absOffset * -135;
+              scale = 1 - absOffset * 0.15;
+              opacity = 1 - absOffset * 0.35;
+            } else {
+              // Ultrawide (>1440)
+              rotateY = offset * -32;
+              translateX = offset * 160;
+              translateZ = absOffset * -160;
+              scale = 1 - absOffset * 0.15;
+              opacity = 1 - absOffset * 0.35;
+            }
 
             return (
               <motion.div
                 key={story.slug}
-                className="absolute w-[18rem] sm:w-[22rem] md:w-[25rem] group"
+                className="absolute w-[15.5rem] xs:w-[17.5rem] sm:w-[21rem] md:w-[24rem] group"
                 id={`carousel-card-${story.slug}`}
                 style={{
                   zIndex: stories.length - absOffset,
@@ -153,37 +191,37 @@ export default function Carousel3D({
                   }
                 }}
               >
-                {/* Story Panel Board */}
-                <div className={`relative flex flex-col justify-between h-[26rem] p-6 rounded-none border bg-black/80 transition-all duration-300 overflow-hidden ${
+                {/* Story Panel Board - Glass Card */}
+                <div className={`relative flex flex-col justify-between h-[25rem] sm:h-[26rem] p-5 rounded-none border transition-all duration-300 overflow-hidden glass-card ${
                   isActive 
-                    ? "border-cyan-500 shadow-[0_0_25px_rgba(6,182,212,0.25)] bg-[#0c0c0c]" 
-                    : "border-white/10 hover:border-white/20"
+                    ? "border-[var(--glow-text)] shadow-[0_0_30px_var(--glow-color)] bg-[#070709]/95" 
+                    : "border-white/5 hover:border-white/15 bg-black/60"
                 }`}>
                   
                   {/* Subtle Neon Accents inside card */}
                   <div className={`absolute top-0 left-0 w-full h-[2px] transition-all duration-500 ${
-                    isActive ? "bg-cyan-400" : "bg-transparent"
+                    isActive ? "bg-[var(--glow-text)] atmosphere-bg" : "bg-transparent"
                   }`} />
 
                   {/* Ambient Glow behind image */}
-                  <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600 to-cyan-500 rounded-none opacity-0 group-hover:opacity-5 transition-opacity duration-500 blur-xl pointer-events-none" />
+                  <div className="absolute -inset-1 bg-gradient-to-r from-[var(--glow-text)]/20 to-[var(--glow-text)]/10 rounded-none opacity-0 group-hover:opacity-5 transition-opacity duration-500 blur-xl pointer-events-none" />
 
                   {/* Top: Image Section */}
-                  <div className="relative w-full h-44 rounded-none overflow-hidden mb-4 border border-white/10 z-10 select-none">
+                  <div className="relative w-full h-40 sm:h-44 rounded-none overflow-hidden mb-4 border border-white/5 z-10 select-none">
                     <img
                       src={story.cover}
                       alt={story.title}
                       referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700 select-none"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 select-none"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20" />
                     
                     {/* Floating Categories */}
                     <div className="absolute bottom-2 left-2 flex flex-wrap gap-1">
                       {story.categories.slice(0, 2).map((cat, cIdx) => (
                         <span 
                           key={cIdx} 
-                          className="px-2 py-0.5 rounded-none font-mono text-[9px] tracking-widest uppercase bg-cyan-950/90 text-cyan-400 border border-cyan-500/20"
+                          className="px-2 py-0.5 rounded-none font-mono text-[8px] sm:text-[9px] tracking-widest uppercase bg-black/80 text-[var(--glow-text)] border border-[var(--glow-text)]/20"
                         >
                           {cat}
                         </span>
@@ -192,7 +230,7 @@ export default function Carousel3D({
 
                     {/* Auto-Rotation Flare indicator */}
                     {isActive && (
-                      <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-none bg-cyan-500 text-black text-[9px] font-mono tracking-widest uppercase font-black">
+                      <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-none bg-[var(--glow-text)] text-black text-[8px] sm:text-[9px] font-mono tracking-widest uppercase font-black shadow-[0_0_8px_var(--glow-color)]">
                         <Flame className="w-2.5 h-2.5" />
                         Featured
                       </div>
@@ -208,26 +246,26 @@ export default function Carousel3D({
                           <AvatarImage 
                             src={story.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde"} 
                             alt={story.author}
-                            className="w-5 h-5 rounded-none object-cover border border-white/15" 
+                            className="w-5 h-5 rounded-none object-cover border border-white/10" 
                           />
-                          <span className="text-[11px] font-mono tracking-wider text-slate-400">
+                          <span className="text-[10px] sm:text-[11px] font-mono tracking-wider text-slate-400">
                             {story.author}
                           </span>
                         </div>
                         
                         {/* Interactive heart & save controls */}
-                        <div className="flex items-center gap-2.5 z-20">
+                        <div className="flex items-center gap-2 z-20">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               onToggleLike(story.slug);
                             }}
-                            className={`p-1 hover:text-cyan-400 transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-mono ${
-                              likedSlugs.includes(story.slug) ? "text-cyan-400 font-bold" : "text-slate-500 hover:text-cyan-400"
+                            className={`p-1 transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-mono ${
+                              likedSlugs.includes(story.slug) ? "text-[var(--glow-text)] font-bold" : "text-slate-500 hover:text-[var(--glow-text)]"
                             }`}
                             title={likedSlugs.includes(story.slug) ? "Unlike" : "Like"}
                           >
-                            <Heart className={`w-3.5 h-3.5 ${likedSlugs.includes(story.slug) ? "fill-current text-cyan-400" : ""}`} />
+                            <Heart className={`w-3.5 h-3.5 ${likedSlugs.includes(story.slug) ? "fill-current text-[var(--glow-text)]" : ""}`} />
                             <span>{getLikesCount(story.title, likedSlugs.includes(story.slug))}</span>
                           </button>
 
@@ -236,8 +274,8 @@ export default function Carousel3D({
                               e.stopPropagation();
                               onToggleSave(story.slug);
                             }}
-                            className={`p-1 hover:text-cyan-400 transition-colors cursor-pointer ${
-                              savedSlugs.includes(story.slug) ? "text-cyan-400" : "text-slate-500 hover:text-cyan-400"
+                            className={`p-1 transition-colors cursor-pointer ${
+                              savedSlugs.includes(story.slug) ? "text-[var(--glow-text)]" : "text-slate-500 hover:text-[var(--glow-text)]"
                             }`}
                             title={savedSlugs.includes(story.slug) ? "Remove bookmark" : "Bookmark"}
                           >
@@ -248,20 +286,20 @@ export default function Carousel3D({
                       
                       {/* Title */}
                       <h3 className={`font-sans tracking-tight transition-all duration-300 ${
-                        isActive ? "text-lg text-white font-bold uppercase" : "text-base text-gray-300"
+                        isActive ? "text-base sm:text-lg text-white font-bold uppercase" : "text-sm sm:text-base text-gray-300"
                       }`}>
                         {story.title}
                       </h3>
 
                       {/* Description */}
-                      <p className="text-xs text-gray-400 line-clamp-2 mt-2 leading-relaxed font-light">
+                      <p className="text-[11px] sm:text-xs text-gray-400 line-clamp-2 mt-2 leading-relaxed font-light">
                         {story.description}
                       </p>
                     </div>
 
                     {/* Bottom: Date & Interactive trigger */}
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
-                      <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">
+                    <div className="flex items-center justify-between mt-3 sm:mt-4 pt-3 border-t border-white/5">
+                      <span className="text-[9px] sm:text-[10px] font-mono text-gray-500 uppercase tracking-wider">
                         {new Date(story.pubDate).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -270,9 +308,9 @@ export default function Carousel3D({
                       </span>
                       
                       {isActive && (
-                        <span className="flex items-center gap-1 text-[11px] font-mono text-cyan-400 font-bold group-hover:text-white transition-colors">
+                        <span className="flex items-center gap-1 text-[10px] sm:text-[11px] font-mono text-[var(--glow-text)] font-bold group-hover:text-white transition-colors">
                           Enter Cosmos
-                          <ArrowUpRight className="w-3.5 h-3.5 text-cyan-400" />
+                          <ArrowUpRight className="w-3.5 h-3.5 text-[var(--glow-text)]" />
                         </span>
                       )}
                     </div>
@@ -288,7 +326,7 @@ export default function Carousel3D({
       <div className="flex items-center gap-6 mt-8 z-20">
         <button
           onClick={handlePrev}
-          className="p-3 bg-[#111111] border border-white/10 text-white/70 hover:text-black hover:bg-cyan-500 hover:border-cyan-500 active:scale-95 transition-all duration-300 cursor-pointer"
+          className="p-3 bg-[#111113]/80 border border-white/5 text-white/70 hover:text-black hover:bg-[var(--glow-text)] hover:border-[var(--glow-text)] active:scale-95 transition-all duration-300 cursor-pointer rounded-full shadow-lg"
           id="prev-carousel-btn"
           aria-label="Previous story card"
         >
@@ -304,9 +342,9 @@ export default function Carousel3D({
                 setActiveIndex(index);
                 setAutoplay(false);
               }}
-              className={`h-1.5 transition-all duration-500 rounded-none cursor-pointer ${
+              className={`h-1.5 transition-all duration-500 rounded-full cursor-pointer ${
                 index === activeIndex 
-                  ? "w-8 bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.6)]" 
+                  ? "w-8 bg-[var(--glow-text)] shadow-[0_0_8px_var(--glow-color)]" 
                   : "w-1.5 bg-white/20 hover:bg-white/40"
               }`}
               aria-label={`Jump to slide ${index + 1}`}
@@ -316,7 +354,7 @@ export default function Carousel3D({
 
         <button
           onClick={handleNext}
-          className="p-3 bg-[#111111] border border-white/10 text-white/70 hover:text-black hover:bg-cyan-500 hover:border-cyan-500 active:scale-95 transition-all duration-300 cursor-pointer"
+          className="p-3 bg-[#111113]/80 border border-white/5 text-white/70 hover:text-black hover:bg-[var(--glow-text)] hover:border-[var(--glow-text)] active:scale-95 transition-all duration-300 cursor-pointer rounded-full shadow-lg"
           id="next-carousel-btn"
           aria-label="Next story card"
         >

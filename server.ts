@@ -2,6 +2,8 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 // Fallback high-fidelity digital art and spatial editorial articles for "The Ink Home"
 // If RSS hits CORS, throttling, or contains low image counts, this guarantees a premium visual design.
@@ -75,7 +77,7 @@ const DEFAULT_STORIES = [
 
 const FALLBACK_ABOUT = {
   description: "The Ink Home is a place where words feel at home. Here, we share stories that explore life, writing, technology, productivity, relationships and mental health. Every piece is a reflection, a lesson, or a moment meant to inspire, connect, and spark thought.",
-  officialWebsite: "https://farhankabir133.github.io/The-Ink-Home/",
+  officialWebsite: "https://theinkhome.live/",
   editors: [
     {
       name: "Farhan Kabir",
@@ -221,6 +223,251 @@ const FALLBACK_ABOUT = {
 };
 
 const avatarCache = new Map<string, string>();
+
+// Active in-memory cache for stories, about info, and caching timestamp
+let cache: {
+  stories: any[];
+  about: any;
+  lastUpdated: number;
+} = {
+  stories: [],
+  about: null,
+  lastUpdated: 0
+};
+
+// Ingest and cache Medium publication data in the background
+async function syncData() {
+  console.log("Background sync: Starting data fetch...");
+  let fetchedStories: any[] = [];
+
+  // Tier 1: Try public rss2json converter (handles Cloudflare bypassing and CORS nicely)
+  try {
+    const rss2JsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent("https://medium.com/feed/the-ink-home")}`;
+    const proxyRes = await fetch(rss2JsonUrl);
+    if (proxyRes.ok) {
+      const jsonPayload = await proxyRes.json();
+      if (jsonPayload && jsonPayload.status === "ok" && Array.isArray(jsonPayload.items)) {
+        fetchedStories = jsonPayload.items.map((item: any) => {
+          let cover = "";
+          let content = item.content || item.description || "";
+          const imgMatches = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+          if (imgMatches && imgMatches[1]) {
+            cover = imgMatches[1];
+          } else {
+            const randSeed = Math.abs(item.title.split("").reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0));
+            const presetCovers = [
+              "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+              "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?auto=format&fit=crop&w=1200&q=80",
+              "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1200&q=80",
+              "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1200&q=80",
+              "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80"
+            ];
+            cover = presetCovers[randSeed % presetCovers.length];
+          }
+
+          const author = item.author || "The Ink Home Team";
+          const authorAvatars: { [key: string]: string } = {
+            "Elena Rostov": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
+            "Devon Vance": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+            "Sophia Sterling": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
+            "Marcus Chen": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80"
+          };
+          const avatar = authorAvatars[author] || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80`;
+
+          const authorRoles: { [key: string]: string } = {
+            "Elena Rostov": "Editor-in-Chief",
+            "Devon Vance": "AI Creative Lead",
+            "Sophia Sterling": "Senior Graphic Editor",
+            "Marcus Chen": "Interaction Director"
+          };
+          const role = authorRoles[author] || "Staff Editor";
+
+          let slug = "";
+          if (item.link) {
+            const parts = item.link.split("/");
+            const lastPart = parts[parts.length - 1];
+            slug = lastPart ? lastPart.split("?")[0] : "";
+          }
+          if (!slug) {
+            slug = item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+          }
+
+          const cleanSnippet = content
+            .replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .substring(0, 180) + "...";
+
+          return {
+            title: item.title,
+            link: item.link,
+            author,
+            role,
+            pubDate: item.pubDate,
+            categories: Array.isArray(item.categories) ? item.categories : ["Editorial"],
+            description: cleanSnippet,
+            content,
+            cover,
+            slug,
+            avatar
+          };
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("syncData Tier 1 failed:", e);
+  }
+
+  // Tier 2: Try fetching directly from Medium RSS if rss2json was unavailable
+  if (fetchedStories.length === 0) {
+    try {
+      const response = await fetch("https://medium.com/feed/the-ink-home", {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9"
+        }
+      });
+      if (response.ok) {
+        const xmlData = await response.text();
+        fetchedStories = parseMediumRSS(xmlData);
+      }
+    } catch (e) {
+      console.warn("syncData Tier 2 failed:", e);
+    }
+  }
+
+  // Deduplicate and fallback check
+  let finalStories = fetchedStories;
+  if (finalStories.length === 0) {
+    finalStories = [...DEFAULT_STORIES];
+  } else {
+    DEFAULT_STORIES.forEach(ds => {
+      const alreadyExists = finalStories.some(
+        us => us.title.toLowerCase() === ds.title.toLowerCase() || us.slug === ds.slug
+      );
+      if (!alreadyExists) {
+        finalStories.push(ds);
+      }
+    });
+  }
+
+  // 2. Fetch editors/writers "About" metadata
+  let updatedAbout = FALLBACK_ABOUT;
+  try {
+    updatedAbout = {
+      description: FALLBACK_ABOUT.description,
+      officialWebsite: FALLBACK_ABOUT.officialWebsite,
+      editors: await Promise.all(
+        FALLBACK_ABOUT.editors.map(async (e) => {
+          const avatar = await getMediumAvatarWithCache(e.username);
+          return {
+            ...e,
+            avatar: avatar || e.avatar
+          };
+        })
+      ),
+      writers: await Promise.all(
+        FALLBACK_ABOUT.writers.map(async (w) => {
+          const avatar = await getMediumAvatarWithCache(w.username);
+          return {
+            ...w,
+            avatar: avatar || (w as any).avatar || ""
+          };
+        })
+      )
+    };
+  } catch (e) {
+    console.warn("syncData about fetch failed:", e);
+  }
+
+  // Save to cache
+  cache = {
+    stories: finalStories,
+    about: updatedAbout,
+    lastUpdated: Date.now()
+  };
+  console.log(`Background sync completed. Stories cached: ${finalStories.length}`);
+}
+
+// Intercept requested client pages and inject specific story/tab OpenGraph metadata dynamically
+async function serveSPAWithSEO(req: express.Request, res: express.Response, viteInstance?: any) {
+  const slug = req.params.slug;
+
+  if (cache.stories.length === 0) {
+    await syncData();
+  }
+
+  const story = cache.stories.find(s => s.slug === slug);
+
+  let title = "The Ink Home | Where Words Feel at Home";
+  let description = "Where spatial typography, code shaders, and cyber-philosophical stories merge into floating geometric objects in space.";
+  let cover = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80";
+  let url = `https://theinkhome.live/story/${slug || ""}`;
+
+  if (story) {
+    title = `${story.title} | The Ink Home`;
+    description = story.description || description;
+    cover = story.cover || cover;
+    url = story.link || url;
+  }
+
+  try {
+    let htmlPath = "";
+    const isProduction = process.env.NODE_ENV === "production";
+
+    if (isProduction) {
+      htmlPath = path.join(process.cwd(), "dist/index.html");
+    } else {
+      htmlPath = path.join(process.cwd(), "index.html");
+    }
+
+    if (!fs.existsSync(htmlPath)) {
+      if (isProduction) {
+        return res.status(404).send("Application not compiled yet. Run npm run build first.");
+      } else {
+        return res.sendFile(htmlPath);
+      }
+    }
+
+    let html = fs.readFileSync(htmlPath, "utf8");
+
+    if (!isProduction && viteInstance) {
+      html = await viteInstance.transformIndexHtml(req.originalUrl, html);
+    }
+
+    // Dynamic SEO tags injection
+    const metaTags = `
+    <!-- Dynamic SEO tags injected by Express server -->
+    <title>${title}</title>
+    <meta name="description" content="${description.replace(/"/g, "&quot;")}" />
+    <meta property="og:title" content="${title.replace(/"/g, "&quot;")}" />
+    <meta property="og:description" content="${description.replace(/"/g, "&quot;")}" />
+    <meta property="og:image" content="${cover}" />
+    <meta property="og:url" content="${url}" />
+    <meta property="og:type" content="article" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title.replace(/"/g, "&quot;")}" />
+    <meta name="twitter:description" content="${description.replace(/"/g, "&quot;")}" />
+    <meta name="twitter:image" content="${cover}" />
+    `;
+
+    // Replace the default title or insert directly in head
+    if (html.includes("<title>")) {
+      html = html.replace(/<title>[\s\S]*?<\/title>/i, "");
+    }
+    html = html.replace("<head>", `<head>${metaTags}`);
+
+    res.status(200).set({ "Content-Type": "text/html" }).end(html);
+  } catch (err) {
+    console.error("SEO Injection failed:", err);
+    if (process.env.NODE_ENV === "production") {
+      res.sendFile(path.join(process.cwd(), "dist/index.html"));
+    } else {
+      res.sendFile(path.join(process.cwd(), "index.html"));
+    }
+  }
+}
 
 async function getMediumAvatarWithCache(username: string): Promise<string> {
   const cacheKey = username.toLowerCase().trim();
@@ -527,196 +774,82 @@ async function startServer() {
   }
 
   app.use(express.json());
+  app.use(express.text({ type: "application/json" })); // support sendBeacon raw strings
 
-  // API Route: Get Medium Stories with Multi-Tier Fallback (Bypasses Cloudflare 403 blocks)
+  // Helmet middleware with tailored rules to allow external CDN elements
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    })
+  );
+
+  // API Rate Limiting to prevent spamming
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 mins
+    max: 100, // limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many requests, please try again later" }
+  });
+  app.use("/api/", apiLimiter);
+
+  // Trigger cache background sync cycle
+  syncData().catch(err => console.error("Initial data sync failed:", err));
+  setInterval(() => {
+    syncData().catch(err => console.error("Background data sync failed:", err));
+  }, 15 * 60 * 1000);
+
+  // API Route: Get Medium Stories with dynamic cache serving
   app.get("/api/stories", async (req, res) => {
-    let xmlData = "";
-    let fetchedStories: any[] = [];
-    let methodUsed = "rss2json";
-
-    // Tier 1: Try public rss2json converter (handles Cloudflare bypassing and CORS nicely)
-    try {
-      console.log("Tier 1: Fetching stories from Medium via rss2json translation API...");
-      const rss2JsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent("https://medium.com/feed/the-ink-home")}`;
-      const proxyRes = await fetch(rss2JsonUrl);
-      
-      if (proxyRes.ok) {
-        const jsonPayload = await proxyRes.json();
-        if (jsonPayload && jsonPayload.status === "ok" && Array.isArray(jsonPayload.items)) {
-          // Map JSON items onto standard story objects
-          fetchedStories = jsonPayload.items.map((item: any) => {
-            // Extract cover link from content or first img tag
-            let cover = "";
-            let content = item.content || item.description || "";
-            const imgMatches = content.match(/<img[^>]+src=["']([^"']+)["']/i);
-            if (imgMatches && imgMatches[1]) {
-              cover = imgMatches[1];
-            } else {
-              const randSeed = Math.abs(item.title.split("").reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0));
-              const presetCovers = [
-                "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-                "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?auto=format&fit=crop&w=1200&q=80",
-                "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1200&q=80",
-                "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1200&q=80",
-                "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80"
-              ];
-              cover = presetCovers[randSeed % presetCovers.length];
-            }
-
-            // Extract custom avatars for authors
-            const authorAvatars: { [key: string]: string } = {
-              "Elena Rostov": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-              "Devon Vance": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
-              "Sophia Sterling": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-              "Marcus Chen": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80"
-            };
-            const author = item.author || "The Ink Home Team";
-            const avatar = authorAvatars[author] || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80`;
-
-            const authorRoles: { [key: string]: string } = {
-              "Elena Rostov": "Editor-in-Chief",
-              "Devon Vance": "AI Creative Lead",
-              "Sophia Sterling": "Senior Graphic Editor",
-              "Marcus Chen": "Interaction Director"
-            };
-            const role = authorRoles[author] || "Staff Editor";
-
-            let slug = "";
-            if (item.link) {
-              const parts = item.link.split("/");
-              const lastPart = parts[parts.length - 1];
-              slug = lastPart ? lastPart.split("?")[0] : "";
-            }
-            if (!slug) {
-              slug = item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-            }
-
-            const cleanSnippet = content
-              .replace(/<[^>]+>/g, " ")
-              .replace(/\s+/g, " ")
-              .trim()
-              .substring(0, 180) + "...";
-
-            return {
-              title: item.title,
-              link: item.link,
-              author,
-              role,
-              pubDate: item.pubDate,
-              categories: Array.isArray(item.categories) ? item.categories : ["Editorial"],
-              description: cleanSnippet,
-              content,
-              cover,
-              slug,
-              avatar
-            };
-          });
-          console.log(`Successfully parsed ${fetchedStories.length} stories via translator proxy.`);
-        }
-      }
-    } catch (e) {
-      // Quiet fallback
+    if (cache.stories.length === 0) {
+      await syncData();
     }
-
-    // Tier 2: Try fetching directly from Medium RSS if rss2json was unavailable
-    if (fetchedStories.length === 0) {
-      try {
-        console.log("Tier 2: Attempting direct retrieve of RSS channel feed as fallback...");
-        const response = await fetch("https://medium.com/feed/the-ink-home", {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache"
-          }
-        });
-        
-        if (response.ok) {
-          xmlData = await response.text();
-          fetchedStories = parseMediumRSS(xmlData);
-          methodUsed = "direct";
-          console.log(`Successfully parsed ${fetchedStories.length} stories via direct fallback.`);
-        }
-      } catch (directError: any) {
-        // Quiet fallback
-      }
-    }
-
-    try {
-      // If we got items from Medium (either Tier 1 or Tier 2), merge them with our high-end curated fallbacks
-      if (fetchedStories && fetchedStories.length > 0) {
-        const uniqueStories = [...fetchedStories];
-        
-        // Add fallbacks that have unique titles to guarantee premium selection
-        DEFAULT_STORIES.forEach(ds => {
-          const alreadyExists = uniqueStories.some(
-            us => us.title.toLowerCase() === ds.title.toLowerCase() || us.slug === ds.slug
-          );
-          if (!alreadyExists) {
-            uniqueStories.push(ds);
-          }
-        });
-        
-        res.json({ source: methodUsed, stories: uniqueStories });
-      } else {
-        console.log("No dynamic stories fetched. Serving robust Tier 3 curated fallback feed.");
-        res.json({ source: "fallback", stories: DEFAULT_STORIES });
-      }
-    } catch (responseError: any) {
-      console.warn("Error during response formatting. Returning defaults as ultimate protection:", responseError);
-      res.json({ source: "fallback", stories: DEFAULT_STORIES });
-    }
+    res.json({ source: "cache", stories: cache.stories });
   });
 
-  // API Route: Get Editors & Writers from "About" page
+  // API Route: Get Editors & Writers from "About" page from cache
   app.get("/api/about", async (req, res) => {
-    try {
-      console.log("Serving high-fidelity editorial about information with automated profile image sync...");
-      
-      const responseAbout = {
-        description: FALLBACK_ABOUT.description,
-        officialWebsite: FALLBACK_ABOUT.officialWebsite,
-        editors: await Promise.all(
-          FALLBACK_ABOUT.editors.map(async (e) => {
-            const avatar = await getMediumAvatarWithCache(e.username);
-            return {
-              ...e,
-              avatar: avatar || e.avatar
-            };
-          })
-        ),
-        writers: await Promise.all(
-          FALLBACK_ABOUT.writers.map(async (w) => {
-            const avatar = await getMediumAvatarWithCache(w.username);
-            return {
-              ...w,
-              avatar: avatar || (w as any).avatar || ""
-            };
-          })
-        )
-      };
-
-      res.json(responseAbout);
-    } catch (error: any) {
-      console.error("Failed to serve about endpoint: ", error);
-      res.json(FALLBACK_ABOUT);
+    if (!cache.about) {
+      await syncData();
     }
+    res.json(cache.about);
   });
 
-  // Serve raw assets directory directly so both Dev & Prod can reliably access files like The_Ink_Home.webp
-  app.use("/assets", express.static(path.join(process.cwd(), "assets")));
+  // API Route: Telemetry tracking endpoint for frontend newsletter signups
+  app.post("/api/track", (req, res) => {
+    let payload = req.body;
+    if (typeof payload === "string") {
+      try {
+        payload = JSON.parse(payload);
+      } catch (e) {}
+    }
+    const event = req.query.event || "unknown";
+    console.log(`[TELEMETRY] Event: ${event} | Payload:`, payload);
+    res.status(200).json({ success: true, message: "Telemetry received successfully" });
+  });
 
-  // Vite middleware setup for running Dev/Production environment correctly
+  // Vite instance declaration and middleware setup for dev environment
+  let vite: any;
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
+    vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
+    // Register Vite middleware first to resolve dev asset modules (like ?import) and handle dev routing fallbacks
     app.use(vite.middlewares);
   } else {
+    // Serve raw assets directory in production
+    app.use("/assets", express.static(path.join(process.cwd(), "assets")));
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
+
+    // Intercept client routes in production for dynamic SEO tags injection
+    app.get(["/", "/3d", "/grid", "/list", "/about", "/saved", "/story/:slug"], async (req, res) => {
+      await serveSPAWithSEO(req, res);
+    });
+
+    // Production catch-all SPA fallback
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
@@ -729,3 +862,4 @@ async function startServer() {
 }
 
 startServer();
+
