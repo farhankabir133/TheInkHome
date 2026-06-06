@@ -7,6 +7,7 @@ const Carousel3D = lazy(() => import("./components/Carousel3D"));
 import StoryGrid from "./components/StoryGrid";
 import StoryList from "./components/StoryList";
 import AuthorsSection from "./components/AuthorsSection";
+import SubmissionGuideline from "./components/SubmissionGuideline";
 import StoryModal from "./components/StoryModal";
 import { Logo } from "./components/Logo";
 import FALLBACK_STORIES from "./data/fallbackStories";
@@ -26,7 +27,8 @@ import {
   Volume2,
   VolumeX,
   Heart,
-  Bookmark
+  Bookmark,
+  Feather
 } from "lucide-react";
 import Subscribe from "./components/Subscribe";
 
@@ -45,7 +47,7 @@ export default function App() {
   // Navigation & View Toggles
   const [entered, setEntered] = useState(false);
   const [bgMode, setBgMode] = useState<"stellar" | "ink" | "forest" | "constellation">("stellar");
-  const [activeTab, setActiveTab] = useState<"3d" | "grid" | "list" | "authors" | "saved">("3d");
+  const [activeTab, setActiveTab] = useState<"3d" | "grid" | "list" | "authors" | "saved" | "guideline">("3d");
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
 
   const pendingSlugRef = useRef<string | null>(null);
@@ -85,7 +87,7 @@ export default function App() {
     }
   };
 
-  const handleTabChange = (tab: "3d" | "grid" | "list" | "authors" | "saved") => {
+  const handleTabChange = (tab: "3d" | "grid" | "list" | "authors" | "saved" | "guideline") => {
     setActiveTab(tab);
     navigateTo("/" + (tab === "authors" ? "about" : tab));
   };
@@ -117,6 +119,10 @@ export default function App() {
       } else if (path === "/saved") {
         setEntered(true);
         setActiveTab("saved");
+        setSelectedStory(null);
+      } else if (path === "/guideline") {
+        setEntered(true);
+        setActiveTab("guideline");
         setSelectedStory(null);
       } else if (path.startsWith("/story/")) {
         const slug = path.replace("/story/", "");
@@ -1029,6 +1035,17 @@ export default function App() {
                     Ledger List
                   </button>
                   <button
+                    onClick={() => handleTabChange("guideline")}
+                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+                      activeTab === "guideline" 
+                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <Feather className="w-3 h-3" />
+                    Guidelines
+                  </button>
+                  <button
                     onClick={() => handleTabChange("authors")}
                     className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer ${
                       activeTab === "authors" 
@@ -1072,11 +1089,11 @@ export default function App() {
               </div>
 
               {/* Mobile Floating Tab selector */}
-              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-sm md:hidden rounded-full border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl p-1">
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[94%] max-w-md md:hidden rounded-full border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl p-1">
                 <div className="flex justify-around items-center text-[9px] font-mono leading-none">
                   <button
                     onClick={() => handleTabChange("3d")}
-                    className={`py-2 px-3 rounded-full flex flex-col items-center gap-0.5 transition-all ${
+                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all ${
                       activeTab === "3d" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
                     }`}
                   >
@@ -1085,7 +1102,7 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => handleTabChange("grid")}
-                    className={`py-2 px-3 rounded-full flex flex-col items-center gap-0.5 transition-all ${
+                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all ${
                       activeTab === "grid" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
                     }`}
                   >
@@ -1094,7 +1111,7 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => handleTabChange("list")}
-                    className={`py-2 px-3 rounded-full flex flex-col items-center gap-0.5 transition-all ${
+                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all ${
                       activeTab === "list" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
                     }`}
                   >
@@ -1102,8 +1119,17 @@ export default function App() {
                     List
                   </button>
                   <button
+                    onClick={() => handleTabChange("guideline")}
+                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all ${
+                      activeTab === "guideline" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
+                    }`}
+                  >
+                    <Feather className="w-3.5 h-3.5" />
+                    Submit
+                  </button>
+                  <button
                     onClick={() => handleTabChange("authors")}
-                    className={`py-2 px-3 rounded-full flex flex-col items-center gap-0.5 transition-all ${
+                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all ${
                       activeTab === "authors" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
                     }`}
                   >
@@ -1112,14 +1138,14 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => handleTabChange("saved")}
-                    className={`py-2 px-3 rounded-full flex flex-col items-center gap-0.5 transition-all relative ${
+                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all relative ${
                       activeTab === "saved" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
                     }`}
                   >
                     <Bookmark className="w-3.5 h-3.5" />
                     Saved
                     {savedSlugs.length > 0 && (
-                      <span className="absolute top-1 right-2 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--glow-text)] text-[8px] font-bold text-black font-mono shadow-[0_0_6px_var(--glow-color)]">
+                      <span className="absolute top-1 right-2.5 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--glow-text)] text-[8px] font-bold text-black font-mono shadow-[0_0_6px_var(--glow-color)]">
                         {savedSlugs.length}
                       </span>
                     )}
@@ -1177,6 +1203,12 @@ export default function App() {
                       <>
                         <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">The Narrative <span className="text-cyan-500">Ledger</span></h2>
                         <p className="text-xs text-slate-400 font-mono tracking-[0.25em] uppercase">MINIMALIST CHRONOLOGICAL INDEX SHIFTED FOR METADATA SCANNING</p>
+                      </>
+                    )}
+                    {activeTab === "guideline" && (
+                      <>
+                        <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">Submission <span className="text-cyan-500">Guidelines</span></h2>
+                        <p className="text-xs text-slate-400 font-mono tracking-[0.25em] uppercase">YOUR VOICE MATTERS HERE. READ BEFORE YOU SUBMIT YOUR STORIES</p>
                       </>
                     )}
                     {activeTab === "authors" && (
@@ -1259,6 +1291,18 @@ export default function App() {
                         </motion.div>
                       )}
 
+                      {activeTab === "guideline" && (
+                        <motion.div
+                          key="nav-guideline"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.4 }}
+                        >
+                          <SubmissionGuideline />
+                        </motion.div>
+                      )}
+
                       {activeTab === "authors" && (
                         <motion.div
                           key="nav-authors"
@@ -1309,7 +1353,7 @@ export default function App() {
                   </div>
 
                   {/* Interactive Dynamic Footnote - Show stats in visual dashboard footer */}
-                  {activeTab !== "authors" && (
+                  {activeTab !== "authors" && activeTab !== "guideline" && (
                     <div className="w-full max-w-6xl mx-auto border-t border-white/10 pt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                       {/* Section 1 */}
                       <div className="space-y-2 border-l-2 border-cyan-500 pl-4">
@@ -1347,7 +1391,7 @@ export default function App() {
                   )}
 
                   {/* Dynamic full-width Editorial Board view below standard carousel/grid/list layouts to enrich experience */}
-                  {activeTab !== "authors" && (
+                  {activeTab !== "authors" && activeTab !== "guideline" && (
                     <div className="pt-8 pb-12 border-t border-white/10">
                       <AuthorsSection stories={stories} onSelectStory={handleSelectStory} editors={editors} writers={writers} aboutInfo={aboutInfo} />
                     </div>
