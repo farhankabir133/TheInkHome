@@ -1,4 +1,4 @@
-import{r as di,j as Cl}from"./index-FwoR0v3m.js";/**
+import{r as di,j as Cl}from"./index-BPHAjP84.js";/**
  * @license
  * Copyright 2010-2026 Three.js Authors
  * SPDX-License-Identifier: MIT
