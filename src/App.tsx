@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Story } from "./types";
 
-const ThreeBackground = lazy(() => import("./components/ThreeBackground"));
 const Carousel3D = lazy(() => import("./components/Carousel3D"));
 import StoryGrid from "./components/StoryGrid";
 import StoryList from "./components/StoryList";
@@ -10,6 +9,7 @@ import AuthorsSection from "./components/AuthorsSection";
 import SubmissionGuideline from "./components/SubmissionGuideline";
 import StoryModal from "./components/StoryModal";
 import { Logo } from "./components/Logo";
+import DataStreamBackground from "./components/DataStreamBackground";
 import FALLBACK_STORIES from "./data/fallbackStories";
 import FALLBACK_ABOUT from "./data/fallbackAbout";
 import { 
@@ -748,19 +748,12 @@ export default function App() {
       className="relative min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden selection:bg-cyan-500/30 selection:text-white"
     >
       
+      <DataStreamBackground />
+      
       {/* Carbon & Noise Texture Overlays */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.03] contrast-150 mix-blend-overlay carbon-texture z-[2]" />
       <div className="absolute inset-0 pointer-events-none opacity-[0.02] noise-overlay z-[2]" />
       
-      {/* Minimal Ambient lighting glows dynamic wrapper */}
-      <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[140px] pointer-events-none z-[1] transition-all duration-1000" />
-      <div className="absolute bottom-[20%] left-[-10%] w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-[140px] pointer-events-none z-[1] transition-all duration-1000" />
-
-      {/* 3D Cosmic Constellation Scene */}
-      <Suspense fallback={null}>
-        <ThreeBackground mode={bgMode} activeTab={selectedStory ? "story" : activeTab} />
-      </Suspense>
-
       {/* Floating Atmosphere Customizer Deck */}
       <div 
         className="fixed bottom-6 left-6 z-40 flex items-center gap-1.5 p-1 bg-black/60 border border-white/10 rounded-full text-[9px] sm:text-[10px] font-mono uppercase tracking-wider backdrop-blur-xl shadow-2xl transition-all duration-300 hover:border-[var(--glow-text)]/40"
@@ -952,11 +945,15 @@ export default function App() {
                           }}
                           className="inline-flex items-center gap-3 px-4 py-2 border border-white/5 hover:border-cyan-500/30 hover:bg-white/[0.02] transition-all cursor-pointer text-left"
                         >
-                          <img
-                            src={story.cover}
-                            alt=""
-                            className="w-8 h-8 rounded-none object-cover border border-white/10"
-                          />
+<img
+                             src={story.cover || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80"}
+                             alt=""
+                             className="w-8 h-8 rounded-none object-cover border border-white/10"
+                             onError={(e) => {
+                               const target = e.target as HTMLImageElement;
+                               target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80";
+                             }}
+                           />
                           <div>
                             <p className="text-[11px] font-bold text-white line-clamp-1 max-w-[180px] uppercase tracking-wider">
                               {story.title}
