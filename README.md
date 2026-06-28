@@ -1,9 +1,8 @@
 # The Ink Home
 
-An immersive, full-stack 3D spatial publication portal and dynamic metadata indexer for "The Ink Home" on Medium. High-performance, SEO-optimized, and styled on modern cinematic editorial principles.
+An immersive, cinematic spatial publication portal and dynamic metadata indexer for "The Ink Home" on Medium. High-performance, fully responsive, and styled with modern editorial design principles.
 
 [![Tech Stack](https://img.shields.io/badge/tech--stack-Vite%20%7C%20React%20%7C%20TS%20%7C%20Node.js-blue?style=for-the-badge)](https://github.com)
-[![WebGL](https://img.shields.io/badge/WebGL-Three.js%20%2F%20R3F-orange?style=for-the-badge)](https://threejs.org)
 [![Animation](https://img.shields.io/badge/Animations-Framer%20Motion-purple?style=for-the-badge)](https://motion.dev)
 [![Styles](https://img.shields.io/badge/Styles-Tailwind%20CSS-cyan?style=for-the-badge)](https://tailwindcss.com)
 
@@ -12,7 +11,7 @@ An immersive, full-stack 3D spatial publication portal and dynamic metadata inde
 ## 1. Hero Section
 
 *   **Platform Tagline:** Spatial Literature in a Multi-Dimensional Cosmos
-*   **Live App Demo:** [Explore Portal](https://ais-pre-os4nnf7dng3kh7bb6qrw3h-544858969369.asia-southeast1.run.app)
+*   **Live App Demo:** [Explore Portal](https://theinkhome.live)
 *   **Publication Base:** [The Ink Home on Medium](https://medium.com/the-ink-home)
 *   **Developer Contact/Portfolio:** [Farhan Kabir @ Github](https://github.com/farhankabir133)
 
@@ -20,28 +19,41 @@ An immersive, full-stack 3D spatial publication portal and dynamic metadata inde
 
 ## 2. Executive Summary
 
-**The Ink Home** is a production-grade, immersive spatial publishing architecture designed to bridge the flat landscape of traditional blog layouts with visually rich, dynamic WebGL environments. Architected on a modern full-stack foundation consisting of React 18, Vite, Node.js, and Three.js, it operates as an automated sync agent and cinematic gateway for the official Medium publication *The Ink Home*.
+**The Ink Home** is a production-grade, immersive spatial publishing platform that transforms traditional blog layouts into cinematic, interactive digital experiences. Built with React 18, Vite, Node.js, and Framer Motion, it serves as an automated sync agent and cinematic gateway for the official Medium publication *The Ink Home*.
 
-Instead of relying on boilerplate API mock-ups, the system implements a real-time server-side synchronization engine that ingests the publication’s RSS feed directly, aggregates active posts, and scrapes high-fidelity author profile metrics in the background. It delivers this dynamic corpus through three interactive presentation layers: an immersive 3D floating carousel, a responsive responsive bento grid, and a sleek editorial list view. The result is a platform that transforms standard static reading materials into tactile, responsive, and cinematic digital art objects.
+The system implements a real-time server-side synchronization engine that ingests the publication’s RSS feed, aggregates active posts, and scrapes high-fidelity author profile metrics. Content is delivered through four interactive presentation layers: an immersive 3D floating carousel, a responsive bento grid, a sleek editorial list view, and a full-screen story modal. The platform features dynamic atmosphere theming, tactile card interactions, skeleton loading states, and a cinematic opening sequence.
 
 ---
 
 ## 3. Key Features
 
-### 🌟 Immersive 3D/UI/UX
-*   **WebGL Particle Galaxy background:** Fluid, responsive dark-mode stellar dust simulation drifting over coordinates relative to cursor physics.
-*   **Interactive 3D Carousel:** Smooth physics-based dragging, deceleration momentum, and interactive spatial cards built in math-driven 2D-to-3D projection spaces.
-*   **Tactile Hover Accelerators:** Framer Motion-driven spatial elevations, card boundaries with cyan gas glow reflections, and responsive transformations on publication cards.
-*   **Cohesive Brand Identity:** Anchored by a bespoke vector-drawn illustration of the publication's signature writer's forest cabin and a glowing stellar moon.
+### 🎬 Cinematic Experience
+*   **Game-Opening Loader:** Full-screen Framer Motion animated entrance sequence with progress bar, grain effects, and corner bracket decorations.
+*   **Dynamic Atmosphere Theming:** Four distinct visual modes (Cosmic, Ink, Cabin, Neural) that propagate across the entire UI — text, borders, glows, accents, and backgrounds.
+*   **Kinetic Typography:** Dramatic scale contrast between massive tight headlines and wide line-height body copy, with mouse-reactive 3D transforms.
+*   **Tactile Cards:** 3D tilt on hover, spring-physics lift, inner glow on active states, and ripple micro-interactions on all interactive surfaces.
 
-### ⚙️ Full-Stack Synchronization & Extraction
-*   **Automated Medium Scraper:** Real-time Express backend endpoints that parse Medium's RSS feeds via Node.js server proxies.
-*   **High-Fidelity Avatar Resolver:** Multi-tier fallback resolution architecture querying direct user profiles with client masquerading, rss2json caches, AllOrigins proxy scrapers, and Unavatar. Allows 100% successful retrieval of dynamic Medium profiles without failing on Cloudflare blocks.
-*   **Authors & Editors Profiler:** Programmatic parsing of active author signatures, sorting contributing editors, and compiling contextual follower counts.
+### 🧭 Navigation & Layout
+*   **Floating Left Sidebar (Desktop):** Fixed vertical rail with icon-only nav, active state indicators, and atmosphere-colored accents.
+*   **Hamburger Menu (Mobile):** Slide-up bottom sheet with all navigation options in a responsive 3-column grid layout.
+*   **Floating Right Dock:** Sound toggle and atmosphere mode selector as a vertical floating panel.
+*   **Centered Content:** Max-width containers with balanced whitespace for comfortable reading.
 
-### ⚡ Performance, SEO, and Layout Resilience
-*   **Fully Responsive Fallbacks:** Adaptive layout configurations automatically downgrading resourceintensive WebGL features to lightweight 2D assets on low-end or touch-screen mobile devices.
-*   **Performance Optimization:** Zero HMR overhead, lazy loading of Heavy WebGL components, and high-efficiency sub-render updates utilizing React's state memoization to protect against unnecessary CPU or rendering thread cycles.
+### 🎠 Interactive 3D Carousel
+*   **Physics-Based Rotation:** Smooth spring animations with drag/swipe support and haptic-style visual feedback.
+*   **Depth & Shadow:** Strong shadow depth on active cards, perspective transforms, and drag-offset visual feedback.
+*   **Touch Optimized:** Native pointer events for mobile swipe gestures.
+
+### ⚡ Performance & Accessibility
+*   **Skeleton Screens:** Shimmer placeholder cards during loading instead of spinners.
+*   **Accessibility First:** Skip-to-content links, visible focus rings (`--atmo-text`), 44px minimum touch targets, and `prefers-reduced-motion` respect.
+*   **Full-Screen Mobile Modal:** Story reading modal goes edge-to-edge on mobile for distraction-free reading.
+*   **GitHub Pages Routing:** 404.html fallback for client-side route support on static hosts.
+
+### ⚙️ Full-Stack Synchronization
+*   **Automated Medium Scraper:** Real-time Express backend endpoints that parse Medium's RSS feeds.
+*   **High-Fidelity Avatar Resolver:** Multi-tier fallback resolution (direct fetch, RSS2JSON, AllOrigins, Unavatar).
+*   **Authors & Editors Profiler:** Programmatic parsing of active author signatures and contextual metrics.
 
 ---
 
@@ -62,14 +74,16 @@ Instead of relying on boilerplate API mock-ups, the system implements a real-tim
         │                                    ├─► Tier 3: AllOrigins SCRAPE
         │                                    └─► Tier 4: Unavatar Service proxy
         │
-        └─── Interaction Engines ──► WebGL Component Layouts (3D Particle Galaxy & Swiper Carousel)
+        └─── Interaction Engines ──► WebGL Component Layouts (3D Carousel, Grid, List)
 ```
 
 ### Architectural Decisions
 
-*   **Strict Server-Client Coupling (Zero Key Exposure):** To guarantee complete credential isolation, all fetching pipelines are routed server-side via Node's `https` or node-fetch stacks. The client browser only interacts with clean JSON schemas exposed at `/api/about`.
-*   **Direct Scratch-Built WebGL Overlay vs Standard Libraries:** While heavy third-party sliders bloat bundle sizes, our Carousel and space animations are written as lean functional units leveraging standard React interaction state, reducing overall library payloads.
-*   **Cascade Image Resolvers:** Medium serves profile avatars through dynamically shifting CDNs which are heavily guarded by Cloudflare DDOS protection. To bypass this, the Node.js backend operates a four-tier retrieval cascade which guarantees high availability of all images.
+*   **Dynamic Theming via CSS Variables:** Atmosphere modes set `data-atmosphere` on the root, propagating `--atmo-text`, `--atmo-border`, `--atmo-glow`, etc., throughout the component tree.
+*   **Framer Motion for Cinematics:** All page transitions, card animations, and the opening loader use `motion/react` with spring physics and custom easing curves.
+*   **Component-Driven Design:** Modular architecture with isolated components for each view layer (Carousel3D, StoryGrid, StoryList, AuthorsSection, SubmissionGuideline).
+*   **Server-Client Isolation:** All fetching pipelines are routed server-side. The client only interacts with clean JSON schemas.
+*   **Progressive Enhancement:** Mobile-first responsive design with hamburger navigation, while desktop gets the full floating sidebar experience.
 
 ---
 
@@ -77,43 +91,83 @@ Instead of relying on boilerplate API mock-ups, the system implements a real-tim
 
 | Area | Key Capabilities | Implementation Details |
 | :--- | :--- | :--- |
-| **Ingestion Engine** | RSS-to-JSON Pipeline | Fetches from the official Medium RSS and sanitizes HTML nodes |
-| **Aesthetic System** | Cosmic Slate Theme | Dark mode aesthetic, glassmorphism filters, glowing borders |
-| **Dynamic Avatar Tier**| Masquerading Scraper | Direct HTTP scraping with custom browser User-Agent headers |
-| **Interactive Browsing**| Tri-Mode Visualizer | Dynamic tabs for 3D Carousel, Bento Grid, and sleek List View |
-| **UX Polish** | Framer Motion Hooks | Physical elevation on hover, micro-shunts, elastic modal entries |
+| **Opening Sequence** | Cinematic Loader | Framer Motion blur-to-sharp title reveal, progress bar, grain overlay |
+| **Theming System** | 4 Atmosphere Modes | CSS custom properties on `[data-atmosphere]` for full palette control |
+| **Navigation** | Responsive Sidebar + Hamburger | Desktop left rail with icons; mobile slide-up sheet with 3-column grid |
+| **3D Carousel** | Physics-Based Carousel | Pointer events, spring animations, drag-offset feedback, depth shadows |
+| **Card UX** | Tactile Interactions | 3D tilt (`rotateX`/`rotateY`), spring lift, ripple effect, inner glow |
+| **Loading States** | Skeleton Screens | Shimmer animations with cinematic progress bar during data fetch |
+| **Typography** | Scale & Rhythm | CSS custom properties for type scale, tight headings, relaxed body text |
+| **Accessibility** | A11y First | Skip links, focus rings, 44px touch targets, `prefers-reduced-motion` |
+| **Ingestion Engine** | RSS-to-JSON Pipeline | Fetches from official Medium RSS and sanitizes HTML nodes |
+| **Avatar Resolution** | 4-Tier Cascade | Direct fetch → RSS2JSON → AllOrigins → Unavatar proxy |
 
 ---
 
 ## 6. UX / UI Highlights
 
-*   **Kinetic Micro-Interactions:** Buttons, card actions, and tab elements rely on fluid cubic-bezier movement variables (`[0.25, 1, 0.5, 1]`) matching Apple-level animation curves.
-*   **Atmospheric Illumination:** Selected elements emit soft cyan-glow halos to denote focus. Non-interacting zones dim out in the dark-slate background to conserve retinal strength during nighttime reading.
-*   **Reader Mode Focus:** The editorial StoryModal hides all layout clutter. Readers can toggle reading speeds, view original links, and inspect structural tags with maximum legibility.
+*   **Cinematic Opening:** Game-style loader with blur reveal, gradient progress bar, and status indicators.
+*   **Atmospheric Illumination:** Active elements emit soft glows that shift color with the selected atmosphere mode.
+*   **Tactile Feedback:** Every button, card, and navigation item has spring-physics hover states and active press feedback.
+*   **Reader Mode Focus:** The StoryModal provides a distraction-free reading environment with full-screen support on mobile.
+*   **Micro-Interactions:** Ripple effects on cards, scale transforms on buttons, and smooth tab transitions.
 
 ---
 
-## 7. Developer Experience (DX)
+## 7. Project Structure
+
+```
+src/
+├── components/
+│   ├── AtmosphereDeck.tsx      # Atmosphere mode selector (desktop right dock)
+│   ├── AuthorsSection.tsx      # About page with editors/writers profiles
+│   ├── Carousel3D.tsx          # 3D orbital story carousel
+│   ├── CinematicLoader.tsx     # Game-opening cinematic loading sequence
+│   ├── DashboardHeader.tsx     # Top header with navigation tabs
+│   ├── DashboardStats.tsx      # Dashboard footer stats display
+│   ├── DataStreamBackground.tsx # Animated data stream canvas background
+│   ├── EmptySavedState.tsx     # Empty state for saved stories
+│   ├── LandingPage.tsx         # Cinematic landing/entry page
+│   ├── Logo.tsx                # Publication logo component
+│   ├── StoryGrid.tsx           # Bento grid story layout
+│   ├── StoryList.tsx           # Editorial list view
+│   ├── StoryModal.tsx          # Full-screen story reader modal
+│   ├── SubmissionGuideline.tsx # Writer submission guidelines
+│   └── SoundController.tsx     # Ambient sound toggle controller
+├── lib/
+│   └── interaction.ts          # Like/save interaction utilities
+├── data/
+│   ├── fallbackStories.ts      # Static story fallback data
+│   └── fallbackAbout.ts        # Static about/author fallback data
+├── types.ts                    # TypeScript interfaces
+├── App.tsx                     # Root application component
+├── main.tsx                    # Application entry point
+└── index.css                   # Global styles, CSS variables, animations
+```
+
+---
+
+## 8. Developer Experience (DX)
 
 ### Setup Instructions
 
 Ensure you have [Node.js (LTS version)](https://nodejs.org/) installed on your workspace environment.
 
 1. **Clone and Navigate to root directory:**
-   ```bash
-   git clone https://github.com/farhankabir133/The-Ink-Home.git
-   cd The-Ink-Home
-   ```
+    ```bash
+    git clone https://github.com/farhankabir133/TheInkHome.git
+    cd TheInkHome
+    ```
 
 2. **Install base dependencies:**
-   ```bash
-   npm install
-   ```
+    ```bash
+    npm install
+    ```
 
 3. **Environments setup:** Populate `.env` from the provided example template.
-   ```bash
-   cp .env.example .env
-   ```
+    ```bash
+    cp .env.example .env
+    ```
 
 ### Execution Commands
 
@@ -137,36 +191,59 @@ Ensure you have [Node.js (LTS version)](https://nodejs.org/) installed on your w
 
 ---
 
-## 8. Database / Backend Schema
+## 9. Component Architecture
 
-Since the application serves as a real-time gateway mirroring the Medium publication, database requirements are structured as an active memory store to avoid synchronization delays or server cold-starts.
+### Core Components
 
-### API Response Metadata Definition (TypeScript Contract)
-```typescript
-interface AssociatedAuthor {
-  name: string;
-  username: string;
-  role: string;
-  bio: string;
-  avatar: string;
-  followers?: number;
-  mediumUrl: string;
-}
+| Component | Purpose | Key Features |
+| :--- | :--- | :--- |
+| `CinematicLoader` | Opening sequence | Framer Motion blur reveal, progress bar, grain overlay |
+| `AtmosphereDeck` | Theme controller | 4 atmosphere modes, CSS variable propagation |
+| `DashboardHeader` | Desktop navigation | Fixed left sidebar with icon tabs and active indicators |
+| `Carousel3D` | 3D story carousel | Pointer drag, spring physics, depth shadows |
+| `StoryGrid` | Bento grid view | Tactile cards, 3D tilt, skeleton loading |
+| `StoryList` | Editorial list | Hover states, like/save interactions |
+| `StoryModal` | Story reader | Full-screen mobile, share actions, social links |
+| `AuthorsSection` | About page | Editor/writer profiles, publication info |
+| `SubmissionGuideline` | Writer guidelines | Interactive checklist, writing specs |
 
-interface IngestedStory {
-  id: string;
-  title: string;
-  link: string;
-  author: string;
-  published: string;
-  categories: string[];
-  content: string;
-}
-```
+### State Management
+
+The application uses React's built-in `useState` and `useEffect` hooks for:
+- Route synchronization (`entered`, `activeTab`, `selectedStory`)
+- Atmosphere mode (`bgMode`)
+- Interaction state (`likedSlugs`, `savedSlugs`)
+- Loading states (`loading`, `error`, `stories`)
 
 ---
 
-## 9. Deployment
+## 10. Design System
+
+### Atmosphere Modes
+
+| Mode | Primary Color | Glow Color | Mood |
+| :--- | :--- | :--- | :--- |
+| `stellar` | `#06b6d4` (Cyan) | `rgba(6, 182, 212, 0.4)` | Cosmic, futuristic |
+| `ink` | `#6366f1` (Indigo) | `rgba(99, 102, 241, 0.4)` | Creative, literary |
+| `forest` | `#f59e0b` (Amber) | `rgba(245, 158, 11, 0.4)` | Warm, cozy |
+| `constellation` | `#10b981` (Emerald) | `rgba(16, 185, 129, 0.4)` | Natural, neural |
+
+### Typography Scale
+
+- **Headings:** Space Grotesk (display font)
+- **Body:** Inter (sans-serif)
+- **Code/Mono:** JetBrains Mono
+- **Scale:** `--text-5xl` through `--text-8xl` for headings, relaxed line-height (`1.65`) for body text
+
+### Motion Tokens
+
+- **Easing:** `cubic-bezier(0.16, 1, 0.3, 1)` (expo out)
+- **Spring:** `cubic-bezier(0.34, 1.56, 0.64, 1)`
+- **Durations:** Fast `150ms`, Normal `300ms`, Slow `500ms`
+
+---
+
+## 11. Deployment
 
 The application is fully containerized and fits inside any cloud runtime (such as Cloud Run, Vercel, or AWS ECS/Fargate).
 
@@ -181,14 +258,14 @@ The application is fully containerized and fits inside any cloud runtime (such a
 
 ---
 
-## 10. Security Notes
+## 12. Security Notes
 
-1.  **Sanitization Protection:** All content arrays fetched from Medium RSS include user-generated HTML nodes. To block XSS risks, the story rendering system limits tags and relies on controlled iframe bounds.
-2.  **Server IP Separation:** Scraping routines happen on Cloud Run instances. This shields the end-user’s IP signature from Medium's telemetry nodes, resulting in safe and privacy-compliant anonymous reading.
+1.  **Sanitization Protection:** All content arrays fetched from Medium RSS include user-generated HTML nodes. The story rendering system sanitizes HTML via DOMPurify and relies on controlled rendering bounds.
+2.  **Server IP Separation:** Scraping routines happen on server-side instances. This shields the end-user’s IP signature from Medium's telemetry nodes, resulting in safe and privacy-compliant anonymous reading.
 
 ---
 
-## 11. Author Section
+## 13. Author Section
 
 *   **Name:** Farhan Kabir
 *   **Role:** Founder & Lead AI/Software Engineer
@@ -197,11 +274,13 @@ The application is fully containerized and fits inside any cloud runtime (such a
 
 ---
 
-## 12. Future Roadmap
+## 14. Future Roadmap
 
-*   [ ] Integration of client-side vector audio synthesizers for rain soundscapes during quiet reading sessions.
+*   [ ] Client-side vector audio synthesizers for ambient soundscapes during reading sessions.
 *   [ ] Instant newsletter subscription proxy feeding directly into Substack or ConvertKit APIs.
-*   [ ] Local indexing via SQLite or local indexedDB schemas to facilitate offline reading for cached books and drafts.
+*   [ ] Local indexing via SQLite or IndexedDB for offline reading of cached books and drafts.
+*   [ ] User preference persistence (default atmosphere mode, layout preference).
+*   [ ] Swipe gesture support for carousel on mobile devices.
 
 ---
 
