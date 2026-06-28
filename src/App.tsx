@@ -10,6 +10,7 @@ import SubmissionGuideline from "./components/SubmissionGuideline";
 import StoryModal from "./components/StoryModal";
 import { Logo } from "./components/Logo";
 import DataStreamBackground from "./components/DataStreamBackground";
+import CinematicLoader from "./components/CinematicLoader";
 import FALLBACK_STORIES from "./data/fallbackStories";
 import FALLBACK_ABOUT from "./data/fallbackAbout";
 import { 
@@ -23,12 +24,15 @@ import {
   Cpu, 
   Radio,
   ChevronRight,
+  ChevronLeft,
   Flame,
   Volume2,
   VolumeX,
   Heart,
   Bookmark,
-  Feather
+  Feather,
+  MoreHorizontal,
+  Menu
 } from "lucide-react";
 import Subscribe from "./components/Subscribe";
 
@@ -49,6 +53,7 @@ export default function App() {
   const [bgMode, setBgMode] = useState<"stellar" | "ink" | "forest" | "constellation">("stellar");
   const [activeTab, setActiveTab] = useState<"3d" | "grid" | "list" | "authors" | "saved" | "guideline">("3d");
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [cinematicComplete, setCinematicComplete] = useState(false);
 
   const pendingSlugRef = useRef<string | null>(null);
 
@@ -91,6 +96,16 @@ export default function App() {
     setActiveTab(tab);
     navigateTo("/" + (tab === "authors" ? "about" : tab));
   };
+
+  // GitHub Pages 404.html fallback: restore original path from query param
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const redirectPath = params.get("redirect_to");
+    if (redirectPath) {
+      window.history.replaceState(null, "", redirectPath);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }
+  }, []);
 
   // URL Path router synchronization listener
   useEffect(() => {
@@ -732,6 +747,7 @@ export default function App() {
 
   const enterWebsite = () => {
     setEntered(true);
+    setCinematicComplete(false);
     navigateTo("/" + (activeTab === "authors" ? "about" : activeTab));
     // Auto start the sound on entrance for premium cinematic audio feedback
     if (!musicPlaying) {
@@ -742,78 +758,85 @@ export default function App() {
     }
   };
 
-  return (
-    <div 
-      data-atmosphere={bgMode}
-      className="relative min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden selection:bg-cyan-500/30 selection:text-white"
-    >
-      
-      <DataStreamBackground />
-      
-      {/* Carbon & Noise Texture Overlays */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03] contrast-150 mix-blend-overlay carbon-texture z-[2]" />
-      <div className="absolute inset-0 pointer-events-none opacity-[0.02] noise-overlay z-[2]" />
-      
-      {/* Floating Atmosphere Customizer Deck */}
+  const handleCinematicComplete = () => {
+    setCinematicComplete(true);
+  };
+
+   return (
+     <div 
+       data-atmosphere={bgMode}
+       className="relative min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden selection:bg-[var(--atmo-text)]/30 selection:text-white"
+     >
+        {!cinematicComplete && (
+          <CinematicLoader onComplete={handleCinematicComplete} />
+        )}
+       
+       <DataStreamBackground baseHue={bgMode === "stellar" ? 190 : bgMode === "ink" ? 235 : bgMode === "forest" ? 35 : bgMode === "constellation" ? 160 : 190} />
+       
+       {/* Carbon & Noise Texture Overlays */}
+       <div className="absolute inset-0 pointer-events-none opacity-[0.03] contrast-150 mix-blend-overlay carbon-texture z-[2]" />
+       <div className="absolute inset-0 pointer-events-none opacity-[0.02] noise-overlay z-[2]" />
+       
+       {/* Floating Atmosphere Customizer Deck */}
       <div 
-        className="fixed bottom-6 left-6 z-40 flex items-center gap-1.5 p-1 bg-black/60 border border-white/10 rounded-full text-[9px] sm:text-[10px] font-mono uppercase tracking-wider backdrop-blur-xl shadow-2xl transition-all duration-300 hover:border-[var(--glow-text)]/40"
+        className="fixed bottom-16 left-2 sm:bottom-6 sm:left-6 z-40 flex items-center gap-1 sm:gap-1.5 p-0.5 sm:p-1 bg-black/60 border border-white/10 rounded-full text-[8px] sm:text-[10px] font-mono uppercase tracking-wider backdrop-blur-xl shadow-2xl transition-all duration-300 hover:border-[var(--glow-text)]/40 scale-90 sm:scale-100 origin-bottom-left"
         id="atmosphere-deck"
       >
         <span className="hidden md:inline-block px-2 text-slate-500 font-bold select-none text-[9px] uppercase tracking-widest pl-2.5">Atmosphere:</span>
         <button
           onClick={() => setBgMode("stellar")}
-          className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
-            bgMode === "stellar" 
-              ? "bg-[#06b6d4] text-black font-extrabold shadow-[0_0_12px_rgba(6,182,212,0.4)]" 
-              : "text-slate-400 hover:text-[#06b6d4]"
-          }`}
-          title="Stellar Universe Node"
-        >
-          <span className={`w-1 h-1 rounded-full bg-cyan-400 ${bgMode === "stellar" ? "bg-black animate-pulse" : ""}`} />
-          Cosmic
-        </button>
-        <button
-          onClick={() => setBgMode("ink")}
-          className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
-            bgMode === "ink" 
-              ? "bg-[#6366f1] text-black font-extrabold shadow-[0_0_12px_rgba(99,102,241,0.4)]" 
-              : "text-slate-400 hover:text-[#6366f1]"
-          }`}
-          title="Flowing Writer's Ink"
-        >
-          <span className={`w-1 h-1 rounded-full bg-indigo-400 ${bgMode === "ink" ? "bg-black animate-pulse" : ""}`} />
-          Ink
-        </button>
-        <button
-          onClick={() => setBgMode("forest")}
-          className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
-            bgMode === "forest" 
-              ? "bg-[#f59e0b] text-black font-extrabold shadow-[0_0_12px_rgba(245,158,11,0.4)]" 
-              : "text-slate-400 hover:text-[#f59e0b]"
-          }`}
-          title="Cozy Forest Cabin Embers"
-        >
-          <span className={`w-1 h-1 rounded-full bg-amber-400 ${bgMode === "forest" ? "bg-black animate-pulse" : ""}`} />
-          Cabin
-        </button>
-        <button
-          onClick={() => setBgMode("constellation")}
-          className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
-            bgMode === "constellation" 
-              ? "bg-[#10b981] text-black font-extrabold shadow-[0_0_12px_rgba(16,185,129,0.4)]" 
-              : "text-slate-400 hover:text-[#10b981]"
-          }`}
-          title="Thought Constellations Network"
-        >
-          <span className={`w-1 h-1 rounded-full bg-emerald-400 ${bgMode === "constellation" ? "bg-black animate-pulse" : ""}`} />
-          Neural
+        className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
+          bgMode === "stellar" 
+            ? "bg-[var(--atmo-text)] text-black font-extrabold shadow-[0_0_12px_var(--atmo-glow)]" 
+            : "text-slate-400 hover:text-[var(--atmo-text)]"
+        }`}
+        title="Stellar Universe Node"
+      >
+        <span className={`w-1 h-1 rounded-full ${bgMode === "stellar" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+        Cosmic
+      </button>
+      <button
+        onClick={() => setBgMode("ink")}
+        className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
+          bgMode === "ink" 
+            ? "bg-[var(--atmo-text)] text-black font-extrabold shadow-[0_0_12px_var(--atmo-glow)]" 
+            : "text-slate-400 hover:text-[var(--atmo-text)]"
+        }`}
+        title="Flowing Writer's Ink"
+      >
+        <span className={`w-1 h-1 rounded-full ${bgMode === "ink" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+        Ink
+      </button>
+      <button
+        onClick={() => setBgMode("forest")}
+        className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
+          bgMode === "forest" 
+            ? "bg-[var(--atmo-text)] text-black font-extrabold shadow-[0_0_12px_var(--atmo-glow)]" 
+            : "text-slate-400 hover:text-[var(--atmo-text)]"
+        }`}
+        title="Cozy Forest Cabin Embers"
+      >
+        <span className={`w-1 h-1 rounded-full ${bgMode === "forest" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+        Cabin
+      </button>
+      <button
+        onClick={() => setBgMode("constellation")}
+        className={`px-2.5 py-1 rounded-full transition-all cursor-pointer flex items-center gap-1 ${
+          bgMode === "constellation" 
+            ? "bg-[var(--atmo-text)] text-black font-extrabold shadow-[0_0_12px_var(--atmo-glow)]" 
+            : "text-slate-400 hover:text-[var(--atmo-text)]"
+        }`}
+        title="Thought Constellations Network"
+      >
+        <span className={`w-1 h-1 rounded-full ${bgMode === "constellation" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+        Neural
         </button>
       </div>
 
       {/* Floating Sound Controller */}
       <button 
         onClick={handleToggleSound}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-3 py-2.5 bg-black/60 hover:bg-black/85 border border-white/10 hover:border-[var(--glow-text)]/40 rounded-full text-[10px] font-mono uppercase tracking-widest text-slate-400 hover:text-white transition-all backdrop-blur-xl cursor-pointer shadow-2xl hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]"
+        className="fixed bottom-20 right-3 sm:bottom-6 sm:right-6 z-50 flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-black/60 hover:bg-black/85 border border-white/10 hover:border-[var(--glow-text)]/40 rounded-full text-[9px] sm:text-[10px] font-mono uppercase tracking-widest text-slate-400 hover:text-white transition-all backdrop-blur-xl cursor-pointer shadow-2xl hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]"
         title={musicPlaying ? "Mute Cosmic Hum" : "Unmute Cosmic Hum"}
       >
         {musicPlaying ? (
@@ -824,12 +847,12 @@ export default function App() {
               <span className="sound-wave-bar" />
               <span className="sound-wave-bar" />
             </div>
-            <span className="text-[9px] text-[var(--glow-text)] atmosphere-text pr-1 font-bold">AMBIENT</span>
+            <span className="text-[8px] sm:text-[9px] text-[var(--glow-text)] atmosphere-text pr-0.5 sm:pr-1 font-bold">AMBIENT</span>
           </>
         ) : (
           <>
-            <VolumeX className="w-3.5 h-3.5" />
-            <span className="text-[9px] pr-1">MUTED</span>
+            <VolumeX className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="text-[8px] sm:text-[9px] pr-0.5 sm:pr-1">MUTED</span>
           </>
         )}
       </button>
@@ -848,7 +871,7 @@ export default function App() {
             className="relative min-h-screen flex flex-col justify-between z-10 px-6 py-8"
           >
             {/* Top Logotype Row */}
-            <header className="w-full flex items-center justify-between max-w-6xl mx-auto">
+            <header className="w-full flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Logo size={46} textColor="text-slate-200" />
               </div>
@@ -856,15 +879,15 @@ export default function App() {
                 href="https://medium.com/the-ink-home" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-slate-400 hover:text-cyan-400 hover:border-cyan-500/30 transition-all border border-transparent px-3 py-1.5 rounded bg-white/5"
+                className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-slate-400 hover:text-[var(--atmo-text)] hover:border-[var(--atmo-border)] transition-all border border-transparent px-3 py-1.5 rounded bg-white/5"
                 id="landing-medium-link"
               >
-                MEDIUM EDITION <ExternalLink className="w-3 h-3 text-cyan-400" />
+                MEDIUM EDITION <ExternalLink className="w-3 h-3 text-[var(--atmo-text)]" />
               </a>
             </header>
 
             {/* Core Cinematic Hero */}
-            <div className="flex-1 flex flex-col items-center justify-center text-center space-y-8 max-w-4xl mx-auto my-12">
+            <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6 sm:space-y-8 max-w-4xl mx-auto my-8 sm:my-12">
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -872,69 +895,67 @@ export default function App() {
                 className="space-y-6"
               >
                 {/* Visual Label Banner */}
-                <div className="inline-block px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[10px] font-bold tracking-[0.2em] text-cyan-400 uppercase">
+                <div className="inline-block px-4 py-1.5 bg-[var(--atmo-surface)] border border-[var(--atmo-border)] rounded text-[10px] font-bold tracking-[0.2em] text-[var(--atmo-text)] uppercase">
                   Featured Edition — Vol. 082
                 </div>
                 {/* Main Heading title with custom gradient styling and 3D kinetic interaction */}
-                <h1 
-                  style={{
-                    letterSpacing: `${-0.05 + Math.abs(coords.x) * 0.03}em`,
-                    transform: `perspective(1000px) rotateY(${coords.x * 12}deg) rotateX(${-coords.y * 12}deg) translateY(${scrollY * -0.1}px)`,
-                    textShadow: `${-coords.x * 12}px ${-coords.y * 12}px 24px var(--glow-color)`,
-                    transition: "transform 0.08s ease-out, letter-spacing 0.15s ease-out, text-shadow 0.15s ease-out"
-                  }}
-                  className="text-6xl md:text-8xl lg:text-[110px] leading-[0.85] font-black tracking-tighter mb-6 italic uppercase font-display bg-gradient-to-r from-white via-cyan-400 to-indigo-400 bg-clip-text text-transparent select-none"
-                >
-                  The Ink<br />Home
-                </h1>
-                
-                {/* Subtitle statement */}
-                <p className="max-w-xl mx-auto text-sm md:text-base text-slate-400 leading-relaxed font-light tracking-wide">
-                  Where spatial typography, code shaders, and cyber-philosophical stories merge into floating geometric objects in space.
-                </p>
+          <h1 
+            style={{
+              letterSpacing: `${-0.05 + Math.abs(coords.x) * 0.03}em`,
+              transform: `perspective(1000px) rotateY(${coords.x * 12}deg) rotateX(${-coords.y * 12}deg) translateY(${scrollY * -0.1}px)`,
+              textShadow: `${-coords.x * 12}px ${-coords.y * 12}px 24px var(--glow-color)`,
+              transition: "transform 0.08s ease-out, letter-spacing 0.15s ease-out, text-shadow 0.15s ease-out"
+            }}
+            className="text-5xl sm:text-6xl md:text-8xl lg:text-[110px] leading-[0.85] font-black tracking-tighter mb-4 sm:mb-6 italic uppercase font-display bg-gradient-to-r from-white via-[var(--atmo-text)] to-[var(--atmo-text)] bg-clip-text text-transparent select-none"
+          >
+            The Ink<br />Home
+          </h1>
+          <p className="max-w-xl mx-auto text-xs sm:text-sm md:text-base text-slate-400 leading-relaxed font-light tracking-wide px-4 sm:px-0">
+            Where spatial typography, code shaders, and cyber-philosophical stories merge into floating geometric objects in space.
+          </p>
               </motion.div>
  
               {/* Enter CTA Trigger BUTTON */}
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 0.6 }}
-              >
-                <button
-                  onClick={enterWebsite}
-                  className="px-8 py-4 bg-white text-black font-extrabold uppercase tracking-[0.2em] text-[11px] hover:bg-cyan-500 hover:scale-102 hover:shadow-[0_0_35px_rgba(6,182,212,0.5)] transition-all duration-300 cursor-pointer flex items-center gap-2.5 z-20 mx-auto"
-                  id="enter-portal-btn"
+                 <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 1, delay: 0.6 }}
                 >
-                  Enter The Ink Home
-                  <ChevronRight className="w-4 h-4 text-black" />
-                </button>
-              </motion.div>
+                  <button
+                    onClick={enterWebsite}
+                    className="px-6 py-3 sm:px-8 sm:py-4 bg-white text-black font-extrabold uppercase tracking-[0.2em] text-[10px] sm:text-[11px] hover:bg-[var(--atmo-text)] hover:scale-102 hover:shadow-[0_0_35px_var(--atmo-glow)] transition-all duration-300 cursor-pointer flex items-center gap-2 z-20 mx-auto"
+                    id="enter-portal-btn"
+                  >
+                    Enter The Ink Home
+                    <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black" />
+                  </button>
+                </motion.div>
             </div>
 
             {/* Bottom Section: Auto-scrolling Featured Stories Cinematic strip */}
             <div className="w-full max-w-6xl mx-auto">
               {loading ? (
-                <div className="flex justify-center py-4">
-                  <div className="w-4 h-4 border border-cyan-400 border-t-transparent rounded-full animate-spin" />
-                </div>
+                  <div className="flex justify-center py-4">
+                    <div className="w-4 h-4 border border-[var(--atmo-text)] border-t-transparent rounded-full animate-spin" />
+                  </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-[10px] font-mono tracking-widest uppercase text-slate-500">
-                    <span className="flex items-center gap-2">
-                      <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                  <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-slate-500 px-2 sm:px-0">
+                    <span className="flex items-center gap-1.5 sm:gap-2">
+                      <Radio className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[var(--atmo-text)] animate-pulse" />
                       SATELLITE MAGAZINE LOOP
                     </span>
-                    <span>Scroll or Click items to read</span>
+                    <span className="hidden sm:inline">Scroll or Click items to read</span>
                   </div>
 
                   {/* Horizontal Auto-Scroller ticker containing stories summaries */}
                   {/* Subscribe card (inline) */}
-                  <div className="max-w-4xl mx-auto mb-4 px-4">
+                  <div className="max-w-4xl mx-auto mb-3 sm:mb-4 px-4 sm:px-0">
                     <Subscribe />
                   </div>
 
-                  <div className="relative w-full overflow-hidden border-t border-b border-white/10 py-4 bg-black/40 backdrop-blur-sm">
-                    <div className="flex gap-4 animate-marquee hover:pause whitespace-nowrap">
+                  <div className="relative w-full overflow-hidden border-t border-b border-white/10 py-3 sm:py-4 bg-black/40 backdrop-blur-sm">
+                    <div className="flex gap-3 sm:gap-4 animate-marquee hover:pause whitespace-nowrap">
                       {stories.map((story) => (
                         <div
                           key={story.slug}
@@ -943,22 +964,22 @@ export default function App() {
                             setEntered(true);
                             navigateTo(`/story/${story.slug}`);
                           }}
-                          className="inline-flex items-center gap-3 px-4 py-2 border border-white/5 hover:border-cyan-500/30 hover:bg-white/[0.02] transition-all cursor-pointer text-left"
-                        >
-<img
-                             src={story.cover || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80"}
-                             alt=""
-                             className="w-8 h-8 rounded-none object-cover border border-white/10"
-                             onError={(e) => {
-                               const target = e.target as HTMLImageElement;
-                               target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80";
-                             }}
-                           />
+                          className="inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 border border-white/5 hover:border-[var(--atmo-border)] hover:bg-white/[0.02] transition-all cursor-pointer text-left"
+                          >
+                          <img
+                            src={story.cover || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80"}
+                            alt=""
+                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-none object-cover border border-white/10"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80";
+                            }}
+                          />
                           <div>
-                            <p className="text-[11px] font-bold text-white line-clamp-1 max-w-[180px] uppercase tracking-wider">
+                            <p className="text-[10px] sm:text-[11px] font-bold text-white line-clamp-1 max-w-[140px] sm:max-w-[180px] uppercase tracking-wider">
                               {story.title}
                             </p>
-                            <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-widest">
+                            <span className="text-[8px] sm:text-[9px] font-mono text-[var(--atmo-text)] uppercase tracking-widest">
                               by {story.author}
                             </span>
                           </div>
@@ -973,7 +994,7 @@ export default function App() {
           </motion.div>
         ) : (
           
-          /* VIEW 2: CORE INTERACTIVE SPATIAL DASHBOARD PLATFORM */
+           /* VIEW 2: CORE INTERACTIVE SPATIAL DASHBOARD PLATFORM */
           <motion.div
             key="dashboard-app"
             initial={{ opacity: 0, y: 30 }}
@@ -981,88 +1002,106 @@ export default function App() {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="relative z-10 flex flex-col min-h-screen bg-[#050505]"
           >
-            {/* Top Workspace Header */}
-            <header className="sticky top-0 md:top-4 md:mt-4 z-30 w-full md:max-w-6xl md:mx-auto border-b md:border border-white/10 bg-[#050505]/95 md:bg-black/60 backdrop-blur-xl md:rounded-full transition-all duration-300 md:shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
-              <div className="flex items-center justify-between px-6 h-16 md:h-16">
-                
-                {/* Brand Logo Wordmark */}
+            {/* Left Workspace Sidebar */}
+            <header className="hidden md:flex fixed left-0 top-0 bottom-0 z-30 w-16 flex-col items-center justify-between py-4 border-r border-white/10 bg-[#050505]/95 backdrop-blur-xl">
+              <div className="flex flex-col items-center gap-1 w-full">
                 <div 
                   onClick={() => {
                     setEntered(false);
                     navigateTo("/");
                   }} 
-                  className="flex items-center cursor-pointer group"
+                  className="p-1.5 cursor-pointer group mb-2"
+                  title="Home"
                 >
-                  <Logo size={36} />
+                  <Logo size={28} />
                 </div>
 
-                 {/* Dashboard Mode view buttons */}
-                <nav className="hidden md:flex items-center gap-1 p-0.5 bg-white/[0.03] border border-white/5 rounded-full text-[10px] font-mono uppercase">
+                <div className="w-8 h-px bg-white/10 my-1" />
+
+                <nav className="flex flex-col items-center gap-1 w-full px-1.5">
                   <button
                     onClick={() => handleTabChange("3d")}
-                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 cursor-pointer relative ${
                       activeTab === "3d" 
-                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-white text-black shadow-[0_8px_20px_rgba(255,255,255,0.18)]" 
+                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
                     }`}
+                    title="3D Universe"
                   >
-                    <Compass className="w-3 h-3" />
-                    3D Universe
+                    <Compass className="w-4 h-4" />
+                    {activeTab === "3d" && (
+                      <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-[var(--glow-text)] shadow-[0_0_10px_var(--glow-color)]" />
+                    )}
                   </button>
                   <button
                     onClick={() => handleTabChange("grid")}
-                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 cursor-pointer relative ${
                       activeTab === "grid" 
-                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-white text-black shadow-[0_8px_20px_rgba(255,255,255,0.18)]" 
+                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
                     }`}
+                    title="Bento Grid"
                   >
-                    <LayoutGrid className="w-3 h-3" />
-                    Bento Grid
+                    <LayoutGrid className="w-4 h-4" />
+                    {activeTab === "grid" && (
+                      <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-[var(--glow-text)] shadow-[0_0_10px_var(--glow-color)]" />
+                    )}
                   </button>
                   <button
                     onClick={() => handleTabChange("list")}
-                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 cursor-pointer relative ${
                       activeTab === "list" 
-                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-white text-black shadow-[0_8px_20px_rgba(255,255,255,0.18)]" 
+                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
                     }`}
+                    title="Ledger List"
                   >
-                    <AlignLeft className="w-3 h-3" />
-                    Ledger List
+                    <AlignLeft className="w-4 h-4" />
+                    {activeTab === "list" && (
+                      <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-[var(--glow-text)] shadow-[0_0_10px_var(--glow-color)]" />
+                    )}
                   </button>
                   <button
                     onClick={() => handleTabChange("guideline")}
-                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 cursor-pointer relative ${
                       activeTab === "guideline" 
-                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-white text-black shadow-[0_8px_20px_rgba(255,255,255,0.18)]" 
+                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
                     }`}
+                    title="Guidelines"
                   >
-                    <Feather className="w-3 h-3" />
-                    Guidelines
+                    <Feather className="w-4 h-4" />
+                    {activeTab === "guideline" && (
+                      <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-[var(--glow-text)] shadow-[0_0_10px_var(--glow-color)]" />
+                    )}
                   </button>
                   <button
                     onClick={() => handleTabChange("authors")}
-                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 cursor-pointer relative ${
                       activeTab === "authors" 
-                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-white text-black shadow-[0_8px_20px_rgba(255,255,255,0.18)]" 
+                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
                     }`}
+                    title="About Us"
                   >
-                    <Users className="w-3 h-3" />
-                    About Us
+                    <Users className="w-4 h-4" />
+                    {activeTab === "authors" && (
+                      <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-[var(--glow-text)] shadow-[0_0_10px_var(--glow-color)]" />
+                    )}
                   </button>
                   <button
                     onClick={() => handleTabChange("saved")}
-                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all cursor-pointer relative ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 cursor-pointer relative ${
                       activeTab === "saved" 
-                        ? "bg-white text-black font-extrabold shadow-[0_4px_12px_rgba(255,255,255,0.15)]" 
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-white text-black shadow-[0_8px_20px_rgba(255,255,255,0.18)]" 
+                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
                     }`}
+                    title="Saved"
                   >
-                    <Bookmark className="w-3 h-3" />
-                    Saved
+                    <Bookmark className="w-4 h-4" />
+                    {activeTab === "saved" && (
+                      <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-[var(--glow-text)] shadow-[0_0_10px_var(--glow-color)]" />
+                    )}
                     {savedSlugs.length > 0 && (
                       <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--glow-text)] text-[9px] font-bold text-black font-mono shadow-[0_0_8px_var(--glow-color)]">
                         {savedSlugs.length}
@@ -1070,101 +1109,133 @@ export default function App() {
                     )}
                   </button>
                 </nav>
-
-                {/* Direct Action triggers */}
-                <div className="flex items-center gap-3">
-                  <a
-                    href="https://medium.com/the-ink-home"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-full font-mono text-[9px] uppercase tracking-widest bg-[var(--glow-text)]/10 border border-[var(--glow-text)]/30 text-[var(--glow-text)] hover:bg-[var(--glow-text)]/20 transition-all cursor-pointer"
-                  >
-                    Medium
-                    <ExternalLink className="w-3 h-3 text-[var(--glow-text)]" />
-                  </a>
-                </div>
               </div>
 
-              {/* Mobile Floating Tab selector */}
-              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[94%] max-w-md md:hidden rounded-full border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl p-1">
-                <div className="flex justify-around items-center text-[9px] font-mono leading-none">
-                  <button
-                    onClick={() => handleTabChange("3d")}
-                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all ${
-                      activeTab === "3d" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
-                    }`}
-                  >
-                    <Compass className="w-3.5 h-3.5" />
-                    3D
-                  </button>
-                  <button
-                    onClick={() => handleTabChange("grid")}
-                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all ${
-                      activeTab === "grid" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
-                    }`}
-                  >
-                    <LayoutGrid className="w-3.5 h-3.5" />
-                    Bento
-                  </button>
-                  <button
-                    onClick={() => handleTabChange("list")}
-                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all ${
-                      activeTab === "list" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
-                    }`}
-                  >
-                    <AlignLeft className="w-3.5 h-3.5" />
-                    List
-                  </button>
-                  <button
-                    onClick={() => handleTabChange("guideline")}
-                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all ${
-                      activeTab === "guideline" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
-                    }`}
-                  >
-                    <Feather className="w-3.5 h-3.5" />
-                    Submit
-                  </button>
-                  <button
-                    onClick={() => handleTabChange("authors")}
-                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all ${
-                      activeTab === "authors" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
-                    }`}
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    About
-                  </button>
-                  <button
-                    onClick={() => handleTabChange("saved")}
-                    className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all relative ${
-                      activeTab === "saved" ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse" : "text-slate-400"
-                    }`}
-                  >
-                    <Bookmark className="w-3.5 h-3.5" />
-                    Saved
-                    {savedSlugs.length > 0 && (
-                      <span className="absolute top-1 right-2.5 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--glow-text)] text-[8px] font-bold text-black font-mono shadow-[0_0_6px_var(--glow-color)]">
-                        {savedSlugs.length}
-                      </span>
-                    )}
-                  </button>
-                </div>
+              <div className="flex flex-col items-center gap-1 w-full">
+                <div className="w-8 h-px bg-white/10 my-1" />
+                <a
+                  href="https://medium.com/the-ink-home"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/[0.06] transition-all"
+                  title="Medium"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
               </div>
             </header>
 
+             {/* Skip to content for accessibility */}
+             <a href="#main-content" className="skip-link">Skip to content</a>
+
+             {/* Mobile hamburger */}
+             <button
+               onClick={() => {
+                 const sheet = document.getElementById('mobile-nav-sheet');
+                 const overlay = document.getElementById('mobile-nav-overlay');
+                 sheet?.classList.toggle('translate-y-full');
+                 overlay?.classList.toggle('opacity-0');
+                 overlay?.classList.toggle('pointer-events-none');
+               }}
+               className="md:hidden fixed top-4 left-4 z-40 w-11 h-11 rounded-xl bg-black/70 border border-white/10 backdrop-blur-xl flex items-center justify-center text-slate-200"
+               aria-label="Open menu"
+               id="mobile-hamburger-btn"
+             >
+               <Menu className="w-5 h-5" />
+             </button>
+
+             {/* Mobile nav overlay */}
+             <div
+               id="mobile-nav-overlay"
+               onClick={() => {
+                 document.getElementById('mobile-nav-sheet')?.classList.add('translate-y-full');
+                 document.getElementById('mobile-nav-overlay')?.classList.add('opacity-0', 'pointer-events-none');
+               }}
+               className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"
+             />
+
+             {/* Mobile nav sheet */}
+             <div
+               id="mobile-nav-sheet"
+               className="md:hidden fixed inset-x-0 bottom-0 translate-y-full z-50 transition-transform duration-300 ease-out"
+             >
+               <div className="mx-4 mb-4 rounded-2xl border border-white/10 bg-black/90 backdrop-blur-xl p-4 shadow-2xl">
+                 <div className="grid grid-cols-3 gap-3">
+                   <button
+                     onClick={() => { handleTabChange("3d"); document.getElementById('mobile-nav-sheet')?.classList.add('translate-y-full'); document.getElementById('mobile-nav-overlay')?.classList.add('opacity-0', 'pointer-events-none'); }}
+                     className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] text-slate-200"
+                   >
+                     <Compass className="w-5 h-5 text-[var(--atmo-text)]" />
+                     <span className="text-[10px] font-mono uppercase tracking-wider">3D</span>
+                   </button>
+                   <button
+                     onClick={() => { handleTabChange("grid"); document.getElementById('mobile-nav-sheet')?.classList.add('translate-y-full'); document.getElementById('mobile-nav-overlay')?.classList.add('opacity-0', 'pointer-events-none'); }}
+                     className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] text-slate-200"
+                   >
+                     <LayoutGrid className="w-5 h-5 text-[var(--atmo-text)]" />
+                     <span className="text-[10px] font-mono uppercase tracking-wider">Grid</span>
+                   </button>
+                   <button
+                     onClick={() => { handleTabChange("list"); document.getElementById('mobile-nav-sheet')?.classList.add('translate-y-full'); document.getElementById('mobile-nav-overlay')?.classList.add('opacity-0', 'pointer-events-none'); }}
+                     className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] text-slate-200"
+                   >
+                     <AlignLeft className="w-5 h-5 text-[var(--atmo-text)]" />
+                     <span className="text-[10px] font-mono uppercase tracking-wider">List</span>
+                   </button>
+                   <button
+                     onClick={() => { handleTabChange("guideline"); document.getElementById('mobile-nav-sheet')?.classList.add('translate-y-full'); document.getElementById('mobile-nav-overlay')?.classList.add('opacity-0', 'pointer-events-none'); }}
+                     className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] text-slate-200"
+                   >
+                     <Feather className="w-5 h-5 text-[var(--atmo-text)]" />
+                     <span className="text-[10px] font-mono uppercase tracking-wider">Write</span>
+                   </button>
+                   <button
+                     onClick={() => { handleTabChange("authors"); document.getElementById('mobile-nav-sheet')?.classList.add('translate-y-full'); document.getElementById('mobile-nav-overlay')?.classList.add('opacity-0', 'pointer-events-none'); }}
+                     className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] text-slate-200"
+                   >
+                     <Users className="w-5 h-5 text-[var(--atmo-text)]" />
+                     <span className="text-[10px] font-mono uppercase tracking-wider">About</span>
+                   </button>
+                   <button
+                     onClick={() => { handleTabChange("saved"); document.getElementById('mobile-nav-sheet')?.classList.add('translate-y-full'); document.getElementById('mobile-nav-overlay')?.classList.add('opacity-0', 'pointer-events-none'); }}
+                     className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] text-slate-200 relative"
+                   >
+                     <Bookmark className="w-5 h-5 text-[var(--atmo-text)]" />
+                     <span className="text-[10px] font-mono uppercase tracking-wider">Saved</span>
+                     {savedSlugs.length > 0 && (
+                       <span className="absolute top-2 right-2 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--atmo-text)] text-[8px] font-bold text-black font-mono">
+                         {savedSlugs.length}
+                       </span>
+                     )}
+                   </button>
+                 </div>
+               </div>
+             </div>
+
             {/* Core View Dashboard Body Container */}
-            <main className="flex-1 py-12 px-6">
+            <main className="flex-1 py-8 sm:py-12 md:pl-20 px-4 sm:px-6">
               
               {/* Fetching state feedback loops */}
               {loading ? (
-                <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-                  {/* Neon Spinner */}
-                  <div className="relative w-12 h-12 flex items-center justify-center">
-                    <div className="absolute inset-0 border border-white/10 rounded-full" />
-                    <div className="absolute inset-0 border border-t-cyan-400 rounded-full animate-spin" />
+                <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6">
+                  <div className="w-full max-w-4xl space-y-4 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="skeleton h-4 w-32 rounded-full" />
+                      <div className="skeleton h-4 w-24 rounded-full" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {[0,1,2,3,4,5].map((i) => (
+                        <div key={i} className="space-y-3 p-4 border border-white/5 bg-black/20">
+                          <div className="skeleton h-32 w-full rounded-none" />
+                          <div className="space-y-2">
+                            <div className="skeleton h-4 w-3/4 rounded-none" />
+                            <div className="skeleton h-3 w-1/2 rounded-none" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <span className="text-[10px] font-mono tracking-[0.25em] text-slate-500 uppercase animate-pulse">
-                    Parsing Medium Telemetry Feed...
-                  </span>
+                  <div className="cinematic-progress w-full max-w-4xl" />
                 </div>
               ) : error && stories.length === 0 ? (
                 <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3 p-8 border border-red-500/20 bg-red-950/10 rounded-none max-w-lg mx-auto">
@@ -1174,7 +1245,7 @@ export default function App() {
                   </p>
                   <button
                     onClick={() => window.location.reload()}
-                    className="mt-2 px-6 py-2.5 font-mono text-[10px] uppercase tracking-widest bg-cyan-500 text-black font-extrabold"
+                    className="mt-2 px-6 py-2.5 font-mono text-[10px] uppercase tracking-widest bg-[var(--atmo-text)] text-black font-extrabold"
                   >
                     Retry Portal Sync
                   </button>
@@ -1186,25 +1257,25 @@ export default function App() {
                   <div className="text-center md:pb-6 space-y-2">
                     {activeTab === "3d" && (
                       <>
-                        <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">The Volumetric <span className="text-cyan-500">Universe</span></h2>
+                        <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">The Volumetric <span className="text-[var(--atmo-text)]">Universe</span></h2>
                         <p className="text-xs text-slate-400 font-mono tracking-[0.25em] uppercase">ROUTING AND ALIGNING THE COGNITIVE MATRIX IN IMMERSIVE SPACE</p>
                       </>
                     )}
                     {activeTab === "grid" && (
                       <>
-                        <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">The Bento <span className="text-cyan-500">Archive</span></h2>
+                        <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">The Bento <span className="text-[var(--atmo-text)]">Archive</span></h2>
                         <p className="text-xs text-slate-400 font-mono tracking-[0.25em] uppercase">HIGH CAPACITY CELLS STRUCTURED FOR SPEED SENSORY CARDS</p>
                       </>
                     )}
                     {activeTab === "list" && (
                       <>
-                        <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">The Narrative <span className="text-cyan-500">Ledger</span></h2>
+                        <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">The Narrative <span className="text-[var(--atmo-text)]">Ledger</span></h2>
                         <p className="text-xs text-slate-400 font-mono tracking-[0.25em] uppercase">MINIMALIST CHRONOLOGICAL INDEX SHIFTED FOR METADATA SCANNING</p>
                       </>
                     )}
                     {activeTab === "guideline" && (
                       <>
-                        <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">Submission <span className="text-cyan-500">Guidelines</span></h2>
+                        <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">Submission <span className="text-[var(--atmo-text)]">Guidelines</span></h2>
                         <p className="text-xs text-slate-400 font-mono tracking-[0.25em] uppercase">YOUR VOICE MATTERS HERE. READ BEFORE YOU SUBMIT YOUR STORIES</p>
                       </>
                     )}
@@ -1215,7 +1286,7 @@ export default function App() {
                     )}
                     {activeTab === "saved" && (
                       <>
-                        <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">The Saved <span className="text-cyan-500">Archive</span></h2>
+                        <h2 className="font-sans font-bold text-3xl md:text-5xl text-white tracking-tight uppercase italic">The Saved <span className="text-[var(--atmo-text)]">Archive</span></h2>
                         <p className="text-xs text-slate-400 font-mono tracking-[0.25em] uppercase">YOUR PERSONALLY CURATED COGNITIVE MATRIX COLLECTED FROM THE SPATIAL NODE</p>
                       </>
                     )}
@@ -1234,7 +1305,7 @@ export default function App() {
                         >
                           <Suspense fallback={
                             <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-3">
-                              <div className="w-8 h-8 border border-t-cyan-400 rounded-full animate-spin" />
+                              <div className="w-8 h-8 border border-[var(--atmo-text)] border-t-transparent rounded-full animate-spin" />
                               <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase">Constructing 3D Space...</span>
                             </div>
                           }>
@@ -1321,7 +1392,7 @@ export default function App() {
                           transition={{ duration: 0.4 }}
                         >
                           {stories.filter(s => savedSlugs.includes(s.slug)).length === 0 ? (
-                            <div className="flex flex-col items-center justify-center min-h-[300px] border border-white/10 bg-[#0c0c0c]/80 p-8 text-center max-w-xl mx-auto space-y-4">
+                              <div className="flex flex-col items-center justify-center min-h-[300px] border border-white/10 bg-[#0c0c0c]/80 p-8 text-center max-w-xl mx-auto space-y-4">
                               <Bookmark className="w-8 h-8 text-slate-600 animate-pulse" />
                               <p className="font-mono text-xs uppercase tracking-widest text-slate-400">Your Archive is Empty</p>
                               <p className="text-xs text-slate-500 leading-relaxed font-light">
@@ -1329,7 +1400,7 @@ export default function App() {
                               </p>
                               <button
                                 onClick={() => handleTabChange("3d")}
-                                className="px-5 py-2 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500 hover:text-black font-mono text-[10px] uppercase tracking-widest transition-colors font-bold cursor-pointer"
+                                className="px-5 py-2 border border-[var(--atmo-border)] text-[var(--atmo-text)] hover:bg-[var(--atmo-text)] hover:text-black font-mono text-[10px] uppercase tracking-widest transition-colors font-bold cursor-pointer"
                               >
                                 Explore Cosmos
                               </button>
@@ -1353,8 +1424,8 @@ export default function App() {
                   {activeTab !== "authors" && activeTab !== "guideline" && (
                     <div className="w-full max-w-6xl mx-auto border-t border-white/10 pt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                       {/* Section 1 */}
-                      <div className="space-y-2 border-l-2 border-cyan-500 pl-4">
-                        <h4 className="text-[11px] font-mono uppercase tracking-[0.2em] text-cyan-400">TELEMETRY SOURCES</h4>
+                      <div className="space-y-2 border-l-2 border-[var(--atmo-border)] pl-4">
+                        <h4 className="text-[11px] font-mono uppercase tracking-[0.2em] text-[var(--atmo-text)]">TELEMETRY SOURCES</h4>
                         <p className="text-xs text-slate-400 font-light">
                           Stories ingested automatically from `https://medium.com/the-ink-home` via background parsing array.
                         </p>
@@ -1364,7 +1435,7 @@ export default function App() {
                       <div className="space-y-2 border-l-2 border-slate-700 pl-4">
                         <h4 className="text-[11px] font-mono uppercase tracking-[0.2em] text-white">NODE RECEPTOR</h4>
                         <p className="text-xs text-slate-400 flex items-center gap-1.5 font-light">
-                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-[var(--atmo-text)] animate-ping" />
                           Online / Synced dynamically
                         </p>
                       </div>
@@ -1379,7 +1450,7 @@ export default function App() {
 
                       {/* Section 4 */}
                       <div className="space-y-2 border-l-2 border-slate-700 pl-4">
-                        <h4 className="text-[11px] font-mono uppercase tracking-[0.2em] text-cyan-400">WebGL MATRIX</h4>
+                        <h4 className="text-[11px] font-mono uppercase tracking-[0.2em] text-[var(--atmo-text)]">WebGL MATRIX</h4>
                         <p className="text-xs text-slate-400 font-light">
                           Designed with custom constellations for spatial immersion. Read full layouts via Medium native links.
                         </p>
@@ -1400,7 +1471,7 @@ export default function App() {
             </main>
 
             {/* General Site Footer */}
-            <footer className="w-full border-t border-white/10 bg-[#070707] pt-16 pb-28 md:pb-16 flex flex-col items-center justify-center space-y-4 text-center text-[10px] text-slate-500 font-mono uppercase tracking-[0.2em] mt-12">
+            <footer className="w-full border-t border-white/10 bg-[#070707] pt-12 sm:pt-16 pb-24 sm:pb-16 md:pb-16 flex flex-col items-center justify-center space-y-3 text-center text-[10px] text-slate-500 font-mono uppercase tracking-[0.2em] mt-8 sm:mt-12">
               <Logo size={48} iconOnly className="opacity-80 hover:opacity-100 transition-opacity" />
               <div className="space-y-1">
                 <span className="block text-slate-400">The Ink Home © 2026</span>

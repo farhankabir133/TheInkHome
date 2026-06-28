@@ -96,11 +96,15 @@ class StreamClass {
   }
 }
 
-const DataStreamBackground: React.FC = () => {
+const DataStreamBackground: React.FC<{ baseHue?: number }> = ({ baseHue = 180 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouse = useRef({ x: 0, y: 0, radius: 100 });
-  const hue = useRef(0);
+  const hue = useRef(baseHue);
   const streamsRef = useRef<StreamClass[]>([]);
+
+  useEffect(() => {
+    hue.current = baseHue;
+  }, [baseHue]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

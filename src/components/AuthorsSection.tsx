@@ -79,22 +79,22 @@ export default function AuthorsSection({
   }, [stories, writers]);
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-6 py-12 space-y-20 text-white" id="about-page-root">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12 sm:space-y-16 lg:space-y-20 text-white" id="about-page-root">
       
       {/* 1. CINEMATIC LANDING HERO */}
-      <section className="relative overflow-hidden border border-white/10 bg-black/60 backdrop-blur-md p-8 md:p-12 lg:p-16 rounded-none space-y-8 shadow-[0_0_50px_rgba(34,211,238,0.05)]">
-        <div className="absolute top-0 left-0 w-1.5 h-full bg-cyan-500" />
-        <div className="absolute top-0 right-0 p-4 font-mono text-[9px] text-cyan-400/40 uppercase tracking-[0.2em] hidden sm:block">
+      <section className="relative overflow-hidden border border-white/10 bg-black/60 backdrop-blur-md p-6 sm:p-8 md:p-12 lg:p-16 rounded-none space-y-6 sm:space-y-8 shadow-[0_0_50px_rgba(34,211,238,0.05)]">
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-[var(--atmo-text)]" />
+        <div className="absolute top-0 right-0 p-4 font-mono text-[9px] text-[var(--atmo-text)]/40 uppercase tracking-[0.2em] hidden sm:block">
           MASTHEAD COORDINATES: 0x22D3EE
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-5 space-y-4">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-400 block">
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[var(--atmo-text)] block">
               Digital Publication
             </span>
             <h1 className="font-sans font-black text-4xl sm:text-5xl md:text-6xl tracking-tighter uppercase italic leading-none text-white">
-              The Ink <span className="text-cyan-400">Home</span>
+              The Ink <span className="text-[var(--atmo-text)]">Home</span>
             </h1>
             <p className="font-mono text-xs text-slate-500 uppercase tracking-widest leading-relaxed">
               Where words feel at home.
@@ -113,7 +113,7 @@ export default function AuthorsSection({
                 href={pubWebsite}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 border border-cyan-500/30 text-cyan-400 bg-cyan-950/20 hover:bg-cyan-500 hover:text-black font-mono text-xs uppercase tracking-widest transition-all duration-300 font-extrabold"
+                className="inline-flex items-center gap-2 px-6 py-3 border border-[var(--atmo-border)] text-[var(--atmo-text)] bg-[var(--atmo-surface)] hover:bg-[var(--atmo-text)] hover:text-black font-mono text-xs uppercase tracking-widest transition-all duration-300 font-extrabold"
               >
                 <Globe className="w-4 h-4" />
                 Official Website
@@ -129,14 +129,14 @@ export default function AuthorsSection({
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-4">
           <div className="space-y-1">
             <h2 className="font-sans font-bold text-2xl uppercase tracking-tight text-white flex items-center gap-3">
-              <User className="w-6 h-6 text-cyan-400" />
+              <User className="w-6 h-6 text-[var(--atmo-text)]" />
               Editorial Board
             </h2>
             <p className="font-mono text-[10px] text-slate-400 uppercase tracking-widest">
               Reviewers overseeing curatorial coherence and standards of literature
             </p>
           </div>
-          <span className="font-mono text-xs text-cyan-400 uppercase tracking-wider mt-2 md:mt-0">
+          <span className="font-mono text-xs text-[var(--atmo-text)] uppercase tracking-wider mt-2 md:mt-0">
             {finalEditors.length} accredited editor{finalEditors.length === 1 ? "" : "s"}
           </span>
         </div>
@@ -155,16 +155,16 @@ export default function AuthorsSection({
                   boxShadow: "0 20px 40px rgba(34, 211, 238, 0.12)"
                 }}
                 transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
-                className={`relative p-8 border bg-black/80 backdrop-blur-md flex flex-col justify-between transition-colors duration-300 ${
-                  isSelected 
-                    ? "border-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.15)]" 
-                    : "border-white/10 bg-black/80"
-                }`}
-              >
+                 className={`relative p-4 sm:p-6 md:p-8 border bg-black/80 backdrop-blur-md flex flex-col justify-between transition-colors duration-300 ${
+                   isSelected 
+                      ? "border-[var(--atmo-text)] shadow-[0_0_30px_var(--atmo-glow)]"
+                     : "border-white/10 bg-black/80"
+                 }`}
+               >
                 {/* Visual badge for dynamic loading synchronization */}
                 <div className="absolute top-0 right-0 p-4 flex gap-2">
                   {editor.followers && (
-                    <span className="px-2.5 py-0.5 font-mono text-[9px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 uppercase tracking-widest">
+                    <span className="px-2.5 py-0.5 font-mono text-[9px] bg-[var(--atmo-surface)] text-[var(--atmo-text)] border border-[var(--atmo-border)] uppercase tracking-widest">
                       {editor.followers} Followers
                     </span>
                   )}
@@ -172,17 +172,17 @@ export default function AuthorsSection({
 
                 <div className="space-y-6">
                   <div className="flex items-center gap-5">
-                    <AvatarImage
-                      src={editor.avatar}
-                      alt={editor.name}
-                      fallbackSrc="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80"
-                      className="w-20 h-20 rounded-none object-cover border-2 border-cyan-500/30"
-                    />
+                   <AvatarImage
+                     src={editor.avatar}
+                     alt={editor.name}
+                     fallbackSrc="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80"
+                     className="w-14 h-14 sm:w-20 sm:h-20 rounded-none object-cover border-2 border-[var(--atmo-border)]"
+                   />
                     <div>
                       <h3 className="font-sans font-bold text-xl uppercase tracking-wide text-white">
                         {editor.name}
                       </h3>
-                      <p className="text-xs font-mono text-cyan-400 uppercase tracking-widest mt-1">
+                      <p className="text-xs font-mono text-[var(--atmo-text)] uppercase tracking-widest mt-1">
                         {editor.role}
                       </p>
                       
@@ -207,7 +207,7 @@ export default function AuthorsSection({
                       href={editor.mediumUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[10px] font-mono text-slate-400 hover:text-cyan-400 inline-flex items-center gap-1 uppercase tracking-widest transition-colors cursor-pointer"
+                      className="text-[10px] font-mono text-slate-400 hover:text-[var(--atmo-text)] inline-flex items-center gap-1 uppercase tracking-widest transition-colors cursor-pointer"
                     >
                       Medium Profile
                       <ExternalLink className="w-3 h-3" />
@@ -221,7 +221,7 @@ export default function AuthorsSection({
                   {editor.storyCount > 0 && (
                     <button
                       onClick={() => setSelectedAuthor(isSelected ? null : editor)}
-                      className="text-xs font-mono text-cyan-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                      className="text-xs font-mono text-[var(--atmo-text)] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <Info className="w-3.5 h-3.5" />
                       {isSelected ? "Hide Catalog" : "Inspect Stories"}
@@ -242,12 +242,12 @@ export default function AuthorsSection({
                       <h4 className="text-[10px] font-mono uppercase tracking-widest text-slate-400">
                         Published In The Ink Home:
                       </h4>
-                      <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                       <div className="space-y-2 max-h-[120px] sm:max-h-[160px] overflow-y-auto pr-1">
                         {editor.stories.map((story) => (
                           <div
                             key={story.slug}
                             onClick={() => onSelectStory(story)}
-                            className="p-3 bg-black border border-white/5 hover:border-cyan-500/30 hover:bg-white/[0.01] transition-all cursor-pointer text-left flex justify-between items-center"
+                            className="p-3 bg-black border border-white/5 hover:border-[var(--atmo-border)] hover:bg-white/[0.01] transition-all cursor-pointer text-left flex justify-between items-center"
                           >
                             <div>
                               <h5 className="text-[11px] font-medium text-white line-clamp-1">
@@ -257,7 +257,7 @@ export default function AuthorsSection({
                                 {new Date(story.pubDate).toLocaleDateString()}
                               </span>
                             </div>
-                            <ExternalLink className="w-3 h-3 text-cyan-400/60" />
+                            <ExternalLink className="w-3 h-3 text-[var(--atmo-text)]/60" />
                           </div>
                         ))}
                       </div>
@@ -275,14 +275,14 @@ export default function AuthorsSection({
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-4">
           <div className="space-y-1">
             <h2 className="font-sans font-bold text-2xl uppercase tracking-tight text-white flex items-center gap-3">
-              <Users className="w-6 h-6 text-cyan-400" />
+              <Users className="w-6 h-6 text-[var(--atmo-text)]" />
               Contributing Scribes
             </h2>
             <p className="font-mono text-[10px] text-slate-400 uppercase tracking-widest">
               Digital columnists and creative engineers crafting raw thought vectors
             </p>
           </div>
-          <span className="font-mono text-xs text-cyan-400 uppercase tracking-wider mt-2 md:mt-0">
+          <span className="font-mono text-xs text-[var(--atmo-text)] uppercase tracking-wider mt-2 md:mt-0">
             {finalWriters.length} active writers
           </span>
         </div>
@@ -301,29 +301,29 @@ export default function AuthorsSection({
                   boxShadow: "0 15px 30px rgba(34, 211, 238, 0.08)"
                 }}
                 transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
-                className={`p-6 border bg-black/60 backdrop-blur-md flex flex-col justify-between relative transition-colors duration-300 ${
-                  isSelected 
-                    ? "border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)]" 
-                    : "border-white/10 bg-black/60"
-                }`}
-              >
+                 className={`p-4 sm:p-5 md:p-6 border bg-black/60 backdrop-blur-md flex flex-col justify-between relative transition-colors duration-300 ${
+                   isSelected 
+                      ? "border-[var(--atmo-text)] shadow-[0_0_20px_var(--atmo-glow)]"
+                     : "border-white/10 bg-black/60"
+                 }`}
+               >
                 <div className="space-y-4">
                   <div className="flex items-center gap-4">
-                    <AvatarImage
-                      src={writer.avatar}
-                      alt={writer.name}
-                      fallbackSrc="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"
-                      className="w-14 h-14 rounded-none object-cover border border-white/10"
-                    />
+                     <AvatarImage
+                       src={writer.avatar}
+                       alt={writer.name}
+                       fallbackSrc="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"
+                       className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-none object-cover border border-white/10"
+                     />
                     <div>
                       <h3 className="font-sans font-semibold text-sm uppercase tracking-wide text-white">
                         {writer.name}
                       </h3>
-                      <p className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest mt-0.5">
+                      <p className="text-[10px] font-mono text-[var(--atmo-text)] uppercase tracking-widest mt-0.5">
                         {writer.role}
                       </p>
                       <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 font-mono text-[8px] bg-white/5 text-slate-400 border border-white/10">
-                        <Feather className="w-2.5 h-2.5 text-cyan-400" />
+                        <Feather className="w-2.5 h-2.5 text-[var(--atmo-text)]" />
                         {writer.storyCount} active piece{writer.storyCount === 1 ? "" : "s"}
                       </span>
                     </div>
@@ -342,7 +342,7 @@ export default function AuthorsSection({
                   {writer.storyCount > 0 && (
                     <button
                       onClick={() => setSelectedAuthor(isSelected ? null : writer)}
-                      className="text-[10px] font-mono text-cyan-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                      className="text-[10px] font-mono text-[var(--atmo-text)] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <Info className="w-3.5 h-3.5" />
                       {isSelected ? "Hide Catalog" : "Inspect Stories"}
@@ -359,17 +359,17 @@ export default function AuthorsSection({
                       transition={{ duration: 0.3 }}
                       className="mt-4 pt-4 border-t border-white/10 space-y-2 overflow-hidden"
                     >
-                      <div className="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
+                       <div className="space-y-1.5 max-h-[100px] sm:max-h-[120px] overflow-y-auto pr-1">
                         {writer.stories.map((story) => (
                           <div
                             key={story.slug}
                             onClick={() => onSelectStory(story)}
-                            className="p-2 bg-black border border-white/5 hover:border-cyan-500/20 hover:bg-white/[0.01] transition-all cursor-pointer text-left flex justify-between items-center"
+                            className="p-2 bg-black border border-white/5 hover:border-[var(--atmo-border)] hover:bg-white/[0.01] transition-all cursor-pointer text-left flex justify-between items-center"
                           >
                             <span className="text-[10px] font-medium text-slate-300 line-clamp-1">
                               {story.title}
                             </span>
-                            <ExternalLink className="w-2.5 h-2.5 text-cyan-400/55" />
+                            <ExternalLink className="w-2.5 h-2.5 text-[var(--atmo-text)]/55" />
                           </div>
                         ))}
                       </div>
