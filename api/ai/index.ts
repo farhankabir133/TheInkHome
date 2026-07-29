@@ -1,29 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import Groq from "groq-sdk";
-import { initializeKnowledgeBase, getDocuments } from "./rag";
+import { initializeKnowledgeBase, getDocuments, searchDocuments, generateRAGResponse } from "./rag";
+import { SYSTEM_PROMPT } from "./system-prompt";
 
 const GROQ_MODEL = "llama-3.3-70b-versatile";
-
-const SYSTEM_PROMPT = `You are the official AI assistant for The Ink Home, a thoughtful publication exploring life, writing, technology, productivity, relationships, and mental health.
-
-## CRITICAL RULES
-1. **STICK TO RETRIEVED KNOWLEDGE**
-2. **NEVER HALLUCINATE FACTS**
-3. **BE CONCISE AND STRUCTURED**
-4. **RECOMMEND RELEVANT ARTICLES**
-5. **PROVIDE SMART ACTIONS**
-6. **SUPPORTED QUERY TYPES** - Publication info, author profiles, article recommendations, submission guidelines, contact info, summaries, related reading
-7. **TONE** - Warm, thoughtful, helpful, human, professional
-
-## RESPONSE TEMPLATE
-### [Title]
-[1-3 sentence direct answer]
-**Key points**
-- ...
-**Related Articles**
-→ [Title](url)
-**Next Steps**
-→ Action`;
 
 let initialized = false;
 
@@ -58,6 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (route === "chat" && req.method === "POST") {
       const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
       const query: string = body?.query || body?.messages?.at(-1)?.content || "";
+      const history = body?.messages || [];
 
       if (!query.trim()) {
         return res.status(400).json({ error: "Missing query" });
@@ -73,42 +53,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      const groq = new Groq({ apiKey });
-      const completion = await groq.chat.completions.create({
-        model: GROQ_MODEL,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: query },
-        ],
-        temperature: 0.3,
-        max_tokens: 1024,
-      });
+      await ensureInit();
+      const docs = searchDocuments(query, 8);
+      const result = await generateRAGResponse(query, history, docs);
 
-      const message = completion.choices?.[0]?.message?.content?.trim() || "I couldn't find that information in The Ink Home's knowledge base.";
       return res.status(200).json({
-        message,
-        sources: [],
-        suggestedQuestions: [],
-        actions: []
+        message: result.message,
+        sources: result.sources,
+        suggestedQuestions: result.suggestedQuestions,
+        actions: result.actions,
       });
     }
 
     if (route === "search" && req.method === "GET") {
+      await ensureInit();
       const q = (req.query.q as string) || "";
       if (!q.trim()) {
         return res.status(400).json({ error: "Missing query parameter 'q'" });
       }
-      return res.status(200).json({ query: q, count: 0, results: [] });
+      const docs = searchDocuments(q, 12);
+      return res.status(200).json({ query: q, count: docs.length, results: docs });
     }
 
     if (route === "crawl" && req.method === "POST") {
-      const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-      const action: string = body?.action || "rebuild";
+      await ensureInit();
+      const docs = getDocuments();
       return res.status(200).json({
         success: true,
-        message: "Crawl completed",
+        message: "Knowledge base already embedded",
         stats: {
-          documents: 0,
+          documents: docs.length,
           indexedAt: new Date().toISOString(),
         },
       });
