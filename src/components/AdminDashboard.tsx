@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Trash2, FileJson, Activity, Database, HardDrive } from 'lucide-react';
+import { getApiBase } from '../lib/api';
 
 interface Stats {
   documents: number;
@@ -18,7 +19,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
 
   async function fetchStats() {
     try {
-      const apiBase = (import.meta as any).env?.VITE_API_BASE?.replace(/\/+$/g, '') || '';
+      const apiBase = getApiBase();
       const res = await fetch(`${apiBase}/api/ai/search?q=the&limit=1`);
       const data = await res.json();
       setStats(prev => ({ ...prev, documents: data.count || 0 }));
@@ -31,7 +32,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     setLoading(true);
     setActionLog(prev => [`${new Date().toLocaleTimeString()} - Starting ${action}...`, ...prev]);
     try {
-      const apiBase = (import.meta as any).env?.VITE_API_BASE?.replace(/\/+$/g, '') || '';
+      const apiBase = getApiBase();
       const res = await fetch(`${apiBase}/api/ai/crawl`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

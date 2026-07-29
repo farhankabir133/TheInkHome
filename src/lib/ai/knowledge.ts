@@ -4,6 +4,13 @@ import path from "path";
 
 const KB_ROOT = path.join(process.cwd(), "knowledge");
 
+function resolveKnowledgeRoot(): string {
+  if (fs.existsSync(KB_ROOT)) return KB_ROOT;
+  const alt = path.join(process.cwd(), "src", "knowledge");
+  if (fs.existsSync(alt)) return alt;
+  return KB_ROOT;
+}
+
 function parseFrontmatter(raw: string): { meta: Record<string, any>; body: string } {
   const lines = raw.split(/\r?\n/);
   if (lines[0]?.trim() !== "---") {
@@ -37,7 +44,8 @@ function parseFrontmatter(raw: string): { meta: Record<string, any>; body: strin
 }
 
 export async function loadAllDocuments(): Promise<KnowledgeDoc[]> {
-  if (!fs.existsSync(KB_ROOT)) {
+  const root = resolveKnowledgeRoot();
+  if (!fs.existsSync(root)) {
     return [];
   }
   const docs: KnowledgeDoc[] = [];
@@ -75,7 +83,7 @@ export async function loadAllDocuments(): Promise<KnowledgeDoc[]> {
     }
   }
 
-  await walk(KB_ROOT, "root", "");
+  await walk(root, "root", "");
   return docs;
 }
 
