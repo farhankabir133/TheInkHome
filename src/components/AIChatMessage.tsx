@@ -1,7 +1,6 @@
 import React from 'react';
 import { MessageSquare, BookOpen, ExternalLink, ChevronRight } from 'lucide-react';
 import { KnowledgeDoc } from '../lib/ai/types';
-import { getDocUrl, getDocTypeLabel } from '../lib/ai/knowledge';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -10,6 +9,45 @@ interface Message {
   actions?: Array<{ label: string; href?: string; action?: string }>;
   suggestedQuestions?: string[];
   id: string;
+}
+
+function getDocUrl(path: string): string {
+  if (path.startsWith("articles/")) {
+    const slug = path.replace(/^articles\//, "").replace(/\.md$/i, "");
+    return `https://theinkhome.live/story/${slug}`;
+  }
+  if (path.startsWith("editors/")) {
+    const username = path.replace(/^editors\//, "").replace(/\.md$/i, "");
+    return `https://medium.com/@${username}`;
+  }
+  if (path.startsWith("writers/")) {
+    const username = path.replace(/^writers\//, "").replace(/\.md$/i, "");
+    return `https://medium.com/@${username}`;
+  }
+  if (path.startsWith("founder/")) {
+    return "https://theinkhome.live/about";
+  }
+  if (path.startsWith("publication/")) {
+    return "https://theinkhome.live/about";
+  }
+  if (path.startsWith("categories/")) {
+    return "https://theinkhome.live/about";
+  }
+  if (path.startsWith("support/")) {
+    return "https://theinkhome.live/about";
+  }
+  return "https://theinkhome.live/about";
+}
+
+function getDocTypeLabel(path: string): string {
+  if (path.startsWith("articles/")) return "Article";
+  if (path.startsWith("editors/")) return "Editor";
+  if (path.startsWith("writers/")) return "Writer";
+  if (path.startsWith("founder/")) return "Founder";
+  if (path.startsWith("publication/")) return "Publication";
+  if (path.startsWith("categories/")) return "Category";
+  if (path.startsWith("support/")) return "Support";
+  return "Document";
 }
 
 interface Props {
@@ -69,7 +107,7 @@ export default function AIChatMessage({ message, onQuickPrompt }: Props) {
               >
                 <BookOpen className="w-3 h-3" />
                 <span className="truncate max-w-[200px] group-hover:text-[var(--atmo-text)]">{source.title}</span>
-                <span className="text-[8px] uppercase tracking-wider opacity-60">{getDocTypeLabel(source)}</span>
+                <span className="text-[8px] uppercase tracking-wider opacity-60">{getDocTypeLabel(source.path)}</span>
               </a>
             ))}
           </div>
