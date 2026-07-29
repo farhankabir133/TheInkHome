@@ -2,7 +2,7 @@ import { KnowledgeDoc } from "./types";
 import fs from "fs";
 import path from "path";
 
-function resolveKnowledgeRoot(): string {
+export function resolveKnowledgeRoot(): string {
   const candidates = [
     path.join(process.cwd(), "knowledge"),
     path.join(process.cwd(), "dist", "knowledge"),
