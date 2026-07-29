@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Groq from "groq-sdk";
+import { initializeKnowledgeBase, getDocuments } from "./rag";
 
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 
@@ -24,8 +25,17 @@ const SYSTEM_PROMPT = `You are the official AI assistant for The Ink Home, a tho
 **Next Steps**
 → Action`;
 
+let initialized = false;
+
+async function ensureInit() {
+  if (!initialized) {
+    await initializeKnowledgeBase();
+    initialized = true;
+  }
+}
+
 function getRoute(req: VercelRequest): string {
-  const url = req.url || `/api/ai${req.url || ""}`;
+  const url = req.url || "/api/ai";
   const pathname = url.split("?")[0];
   if (pathname.endsWith("/chat")) return "chat";
   if (pathname.endsWith("/search")) return "search";
@@ -105,12 +115,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (route === "health" && req.method === "GET") {
+      await ensureInit();
+      const docs = getDocuments();
       const groqKey = process.env.GROQ_API_KEY;
       return res.status(200).json({
         status: "ok",
         knowledgeBase: {
-          loaded: true,
-          documentCount: 0,
+          loaded: docs.length > 0,
+          documentCount: docs.length,
         },
         groq: {
           configured: !!groqKey,
