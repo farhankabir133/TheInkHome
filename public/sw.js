@@ -1,4 +1,4 @@
-const CACHE_NAME = "the-ink-home-cache-v1";
+const CACHE_NAME = "the-ink-home-cache-v2";
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
