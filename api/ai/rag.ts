@@ -4,6 +4,8 @@ import { loadAllDocuments, getDocUrl, getDocTypeLabel } from "./knowledge";
 import { SYSTEM_PROMPT } from "./system-prompt";
 import Groq from "groq-sdk";
 
+const GROQ_MODEL = "llama-3.3-70b-versatile";
+
 let documents: KnowledgeDoc[] = [];
 let embeddings: Record<string, number[]> = {};
 
