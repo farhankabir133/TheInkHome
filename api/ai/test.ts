@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { resolveKnowledgeRoot } from "../../src/lib/ai/knowledge";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Cache-Control", "no-store");
@@ -8,15 +9,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const fs = await import("fs");
     const path = await import("path");
     const cwd = process.cwd();
-    const kbPath = path.join(cwd, "knowledge");
-    const kbExists = fs.existsSync(kbPath);
+    const kbRoot = resolveKnowledgeRoot();
+    const kbExists = fs.existsSync(kbRoot);
+    const groqKey = process.env.GROQ_API_KEY;
 
     return res.status(200).json({
       status: "ok",
       cwd,
-      knowledgePath: kbPath,
+      knowledgeRoot: kbRoot,
       knowledgeExists: kbExists,
-      envKeys: Object.keys(process.env).filter(k => k.includes("GROQ") || k.includes("GEMINI") || k.includes("GOOGLE")),
+      groqConfigured: !!groqKey,
+      groqPrefix: groqKey ? `${groqKey.slice(0, 6)}...` : null,
     });
   } catch (err) {
     console.error("Test error:", err);
