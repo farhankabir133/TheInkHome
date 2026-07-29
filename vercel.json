@@ -1,6 +1,7 @@
 {
   "version": 2,
   "routes": [
+    { "src": "/api/ai/(.*)", "dest": "/api/ai/index" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/assets/(.*)", "dest": "/dist/assets/$1" },
     { "src": "/fonts/(.*)", "dest": "/dist/fonts/$1" },
