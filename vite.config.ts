@@ -13,7 +13,7 @@ export default defineConfig(() => {
     },
     build: {
       rollupOptions: {
-        external: ['three', '@google/genai', '@upstash/redis', 'express', 'helmet', 'express-rate-limit', 'isomorphic-dompurify'],
+        external: ['three', '@google/genai', '@upstash/redis', 'express', 'helmet', 'express-rate-limit'],
       },
     },
     server: {
