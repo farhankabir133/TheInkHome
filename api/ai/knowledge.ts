@@ -2,6 +2,8 @@ import { KnowledgeDoc } from "./types";
 import fs from "fs";
 import path from "path";
 
+let bundledDocs: KnowledgeDoc[] | null = null;
+
 export function resolveKnowledgeRoot(): string {
   const candidates = [
     path.join(process.cwd(), "knowledge"),
@@ -12,6 +14,17 @@ export function resolveKnowledgeRoot(): string {
     if (fs.existsSync(candidate)) return candidate;
   }
   return path.join(process.cwd(), "knowledge");
+}
+
+function loadBundledDocs(): KnowledgeDoc[] | null {
+  if (bundledDocs) return bundledDocs;
+  try {
+    const { knowledgeDocs } = require("./knowledge-data");
+    bundledDocs = knowledgeDocs;
+    return bundledDocs;
+  } catch {
+    return null;
+  }
 }
 
 function parseFrontmatter(raw: string): { meta: Record<string, any>; body: string } {
@@ -43,6 +56,9 @@ function parseFrontmatter(raw: string): { meta: Record<string, any>; body: strin
 }
 
 export async function loadAllDocuments(): Promise<KnowledgeDoc[]> {
+  const bundled = loadBundledDocs();
+  if (bundled) return bundled;
+
   const root = resolveKnowledgeRoot();
   if (!fs.existsSync(root)) {
     return [];

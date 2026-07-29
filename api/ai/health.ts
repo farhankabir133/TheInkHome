@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { initializeKnowledgeBase, getDocuments, searchDocuments } from "../../src/lib/ai/rag";
+import { initializeKnowledgeBase, getDocuments, searchDocuments } from "./rag";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Cache-Control", "no-store");

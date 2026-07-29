@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { initializeKnowledgeBase, refreshEmbeddings, getDocuments } from "../../src/lib/ai/rag";
-import { loadEmbeddingCache } from "../../src/lib/ai/embeddings";
+import { initializeKnowledgeBase, refreshEmbeddings, getDocuments } from "./rag";
+import { loadEmbeddingCache } from "./embeddings";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Cache-Control", "no-store");

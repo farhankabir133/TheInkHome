@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { initializeKnowledgeBase, generateRAGResponse, searchDocuments } from "../../src/lib/ai/rag";
+import { initializeKnowledgeBase, generateRAGResponse, searchDocuments } from "./rag";
 
 let initialized = false;
 
