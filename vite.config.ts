@@ -21,14 +21,6 @@ export default defineConfig(() => {
         },
         external: ['three', '@google/genai', 'groq-sdk', '@upstash/redis', 'express', 'helmet', 'express-rate-limit'],
       },
-      // Copy knowledge base into dist so it is available in Vercel deployments
-      writeBundle: async () => {
-        const srcDir = path.resolve(__dirname, 'knowledge');
-        const destDir = path.resolve(__dirname, 'dist', 'knowledge');
-        if (fs.existsSync(srcDir)) {
-          fs.cpSync(srcDir, destDir, { recursive: true });
-        }
-      },
     },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',

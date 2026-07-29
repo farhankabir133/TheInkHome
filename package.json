@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build",
+    "build": "vite build && node scripts/copy-knowledge.js",
     "start": "tsx server.ts",
     "predeploy": "npm run build",
     "deploy": "vercel --prod --token $VERCEL_TOKEN",
