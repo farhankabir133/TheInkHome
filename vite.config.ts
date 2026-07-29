@@ -5,6 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
@@ -13,6 +14,10 @@ export default defineConfig(() => {
     },
     build: {
       rollupOptions: {
+        output: {
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+        },
         external: ['three', '@google/genai', '@upstash/redis', 'express', 'helmet', 'express-rate-limit'],
       },
     },
