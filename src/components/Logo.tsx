@@ -12,7 +12,7 @@ export const Logo: React.FC<LogoProps> = ({
   className = "",
   size = 40,
   iconOnly = false,
-  textColor = "text-white"
+  textColor = "text-white",
 }) => {
   return (
     <div className={`flex items-center gap-3 select-none ${className}`}>
@@ -23,6 +23,7 @@ export const Logo: React.FC<LogoProps> = ({
         height={size}
         style={{ width: size, height: size }}
         className="object-contain max-w-full max-h-full flex-shrink-0 transition-all duration-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+        decoding="async"
       />
 
       {/* Optional typography lockup - condensed elegant display sans/serif pairing */}

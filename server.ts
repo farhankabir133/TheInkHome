@@ -4,227 +4,19 @@ import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import compression from "compression";
+import {
+  DEFAULT_STORIES,
+  FALLBACK_ABOUT,
+  transformRSSItems,
+  parseMediumRSS,
+  djb2Hash,
+} from "./src/lib/api-server";
 
-// Fallback high-fidelity digital art and spatial editorial articles for "The Ink Home"
-// If RSS hits CORS, throttling, or contains low image counts, this guarantees a premium visual design.
-const DEFAULT_STORIES = [
-  {
-    title: "The Spatial Medium: Redefining Digital Architecture",
-    link: "https://medium.com/the-ink-home/spatial-medium-redefining-digital-architecture",
-    author: "Elena Rostov",
-    role: "Editor-in-Chief",
-    pubDate: "Sun, 31 May 2026 10:00:00 GMT",
-    categories: ["Architecture", "Digital Art", "Design"],
-    description: "An inquiry into the collapse of screen borders, tracing how digital typography transitions from absolute grid references to floating spatial objects in three-dimensional environments.",
-    content: "<p>The screen is no longer a surface. It is a portal with physical, kinetic depth. As we transition from flat editorial spaces to volumetric layouts, we are forced to rethink typography, paragraph spacing, and user eye tracking. In this first major thesis from the Spatial Design lab at The Ink Home, we trace the transition from paper to pixels, and finally, into multi-dimensional kinetic canvases.</p><figure><img src=\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80\" /></figure><p>The concept of digital printing elements floating in depth allows editors to establish physical visual hierarchy. Larger headers can sit 20px closer to the camera, creating natural parallax during scroll.</p>",
-    cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-    slug: "spatial-medium-redefining-digital-architecture",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
-  },
-  {
-    title: "Aesthesis and the Algorithmic Composer",
-    link: "https://medium.com/the-ink-home/aesthesis-algorithmic-composer",
-    author: "Devon Vance",
-    role: "AI Creative Lead",
-    pubDate: "Fri, 29 May 2026 14:15:00 GMT",
-    categories: ["Artificial Intelligence", "Sound", "Philosophy"],
-    description: "How neural networks are rebuilding the acoustic syntax of modern interactive journalism, generating ambient soundtracks keyed directly to reading velocity.",
-    content: "<p>What does text sound like when it is read? Not spoken, but felt. At The Ink Home, we’ve developed a generative ambient soundscape system that dynamically syncs background tones with the user’s reading position. High-density words trigger subtle high-frequency resonances, while narrative gaps bring in deep drone base hums.</p><figure><img src=\"https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?auto=format&fit=crop&w=1200&q=80\" /></figure><p>This is the future of immersive editorial. The browser serves not just as a visual reader, but as a sensory conductor.</p>",
-    cover: "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?auto=format&fit=crop&w=1200&q=80",
-    slug: "aesthesis-algorithmic-composer",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80"
-  },
-  {
-    title: "Liquid Typography: The Kinetic Textures of Midnight",
-    link: "https://medium.com/the-ink-home/liquid-typography-kinetic-textures",
-    author: "Sophia Sterling",
-    role: "Senior Graphic Editor",
-    pubDate: "Wed, 27 May 2026 09:30:00 GMT",
-    categories: ["Typography", "Motion Design", "Creative Coding"],
-    description: "Plunging deep into viscous web text layouts. We explore the implementation of fluid shaders that bend, float, and flow dynamically as the cursor collides with headlines.",
-    content: "<p>Static fonts are dead. When we look at a screen, we expect characters to display organic behaviors like tension and viscosity. Liquid Typography examines WebGL-based typeface meshes that adapt to mouse momentum, splitting and re-joining with gorgeous metallic finishes.</p><figure><img src=\"https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1200&q=80\" /></figure><p>The tactile weight of these digital glyphs creates physical engagement, transforming reading from a passive habit into an active somatic experience.</p>",
-    cover: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1200&q=80",
-    slug: "liquid-typography-kinetic-textures",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"
-  },
-  {
-    title: "The Ink Archive: Tracing the Philosophy of Cyber-Scribes",
-    link: "https://medium.com/the-ink-home/philosophy-of-cyber-scribes",
-    author: "Elena Rostov",
-    role: "Editor-in-Chief",
-    pubDate: "Mon, 25 May 2026 18:20:00 GMT",
-    categories: ["Philosophy", "Literature", "Cyberculture"],
-    description: "An archival study of electronic literary clubs, examining how the ink on our hands became code in the browser, and the collective spirit of the digital publication.",
-    content: "<p>The ink of the modern age does not stain fingers; it alters screens. In tracing the lineage from printed zines to the Medium feed, the cybernetic publishing space retains its punk roots. This long-form article details our collective’s mission to preserve raw editorial control amidst algorithmic feed curation.</p><figure><img src=\"https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1200&q=80\" /></figure><p>By transforming Medium metadata into spatial coordinates, we free the articles from standardized corporate grids into infinite editorial solar systems.</p>",
-    cover: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1200&q=80",
-    slug: "philosophy-of-cyber-scribes",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
-  },
-  {
-    title: "Metadimensional Interfaces: Beyond the Desktop Metaphor",
-    link: "https://medium.com/the-ink-home/metadimensional-interfaces-beyond-desktop",
-    author: "Marcus Chen",
-    role: "Interaction Director",
-    pubDate: "Thu, 21 May 2026 11:10:00 GMT",
-    categories: ["UI/UX", "Future", "Science Fiction"],
-    description: "A prospective review of zero-gravity dashboards, spatial data stacks, and multi-layered typography systems designed for neural-link and depth interfaces.",
-    content: "<p>For forty years, human-computer interaction has lived in the flat confines of cardboard-desktop file systems. But what happens when interfaces occupy floating depths? We present a speculative UI suite that arranges ideas in atomic orbits, letting stories interact with one another based on content tags.</p><figure><img src=\"https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80\" /></figure><p>In the spatial web, context is visual distance. High relevance brings items closer, while divergent files drift to the horizons.</p>",
-    cover: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80",
-    slug: "metadimensional-interfaces-beyond-desktop",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80"
-  }
-];
+const AVATAR_CACHE_TTL = 1000 * 60 * 60;
 
-const FALLBACK_ABOUT = {
-  description: "The Ink Home is a place where words feel at home. Here, we share stories that explore life, writing, technology, productivity, relationships and mental health. Every piece is a reflection, a lesson, or a moment meant to inspire, connect, and spark thought.",
-  officialWebsite: "https://theinkhome.live/",
-  editors: [
-    {
-      name: "Farhan Kabir",
-      username: "farhankabir133",
-      role: "AI Engineer | Full-Stack Dev",
-      bio: "A technology essayist, digital artisan, and design researcher exploring interfaces and spatial publishing mediums at The Ink Home.",
-      avatar: "https://miro.medium.com/v2/resize:fit:2400/1*OonAmXM0uBzGf_KYL3s85w.png",
-      followers: 684,
-      mediumUrl: "https://medium.com/@farhankabir133"
-    },
-    {
-      name: "Dua Batool",
-      username: "dbatool242",
-      role: "Published Book Author | Zoology Student",
-      bio: "An inquisitive mind investigating life patterns, biological ecosystems, and deep narrative themes through published works.",
-      avatar: "https://miro.medium.com/v2/resize:fit:2400/1*4o35ax2_LSaOtP-3Lfi0Eg.jpeg",
-      followers: 135,
-      mediumUrl: "https://medium.com/@dbatool242"
-    }
-  ],
-  writers: [
-    {
-      name: "Adam McClarin",
-      username: "adammcclarin",
-      role: "VeloxSync Creator & AI Engineer",
-      bio: "Adam McClarin | Founder of Meraki Is Love · Creator of VeloxSync · Full-Stack Dev · AI Engineer · Published Author · Friendswood, TX · adammcclarin.com"
-    },
-    {
-      name: "Mabel Penrose",
-      username: "mabelpenrose",
-      role: "HSP & Creative Essayist",
-      bio: "Free spirit, HSP, and former military brat exploring what it means to feel deeply in a chaotic world."
-    },
-    {
-      name: "Yiwan Ye",
-      username: "yiwanye",
-      role: "Assistant Professor & Health Researcher",
-      bio: "Assistant Professor of Health & Human Services. Research interests include population health, happiness, cohort analysis, Bayesian statistics, and AI."
-    },
-    {
-      name: "Soami Daya Krishnananda",
-      username: "soamidayakrishnananda",
-      role: "Physicist & Metaphysics Columnist",
-      bio: "A physicist at the crossroads of science and conscience, reflecting on bio-logic of life in the vast landscape of metaphysics."
-    },
-    {
-      name: "curious but grounded | Anna Jaworska",
-      username: "annajaworska",
-      role: "Systems & Emotional Patterns Essayist",
-      bio: "I write about misunderstood things: people, systems, materials, ideas, and emotional patterns that don’t fit neatly into modern life. Curious but grounded."
-    },
-    {
-      name: "M. Arman Reza Shah",
-      username: "marmanrezashah",
-      role: "Geotechnical Engineer & Researcher",
-      bio: "Scientist | Geotechnical Engineer | Geo-Environmental Researcher | Academic Author | Faculty | Activist | Politician"
-    },
-    {
-      name: "Achelle Santos",
-      username: "achellesantos",
-      role: "Freelance Writer & Children's Author",
-      bio: "10+ years as a freelance writer/editor; aspiring to be a published children's book author."
-    },
-    {
-      name: "Amber Faulk",
-      username: "amberfaulk",
-      role: "Mindfulness & Workplace Wellness Advisor",
-      bio: "My background in mindfulness, corporate wellness, and employee benefits helps me translate how people feel into practical, business-aligned workplace solutions."
-    },
-    {
-      name: "Paushali Das",
-      username: "paushalidas",
-      role: "Literary & Emotional Well-being Columnist",
-      bio: "Paushali translates raw emotional experiences, trauma work, and creative writing practices into deeply connecting reflective essays."
-    },
-    {
-      name: "Sadman Taqi",
-      username: "sadmantaqi",
-      role: "Mechanical Engineer & Culture Writer",
-      bio: "A mechanical engineer deeply involved with art,culture,geopolitics, sports and many aspects of life. Searching tranquillity and serenity."
-    },
-    {
-      name: "Taiba Mansuri",
-      username: "taibamansuri",
-      role: "Storytelling & Daily Chaos Observer",
-      bio: "Writer of modern life, emotions, and the psychology behind our daily chaos. If you like soulful storytelling mixed with sharp insight, you’re home."
-    },
-    {
-      name: "Claudio Casella",
-      username: "claudiocasella",
-      role: "Literature & Music Writer",
-      bio: "I'm a italian writer. Deeply love about literature, music and people."
-    },
-    {
-      name: "Amoo Ridwan",
-      username: "amooridwan",
-      role: "Finance & Personal Discipline Columnist",
-      bio: "I’m deeply interested in the overlap between technology, financial growth, and personal discipline. Most of my time is spent figuring out how to work smarter."
-    },
-    {
-      name: "LOGESH T V | Genai Developer",
-      username: "logeshtv",
-      role: "AI Engineer & GenAI Explainer",
-      bio: "AI Engineer & founder. Explaining GenAI so simply even your grandma gets it. Making tech funny because debugging hurts. Welcome to the chaos!"
-    },
-    {
-      name: "Mim Maya",
-      username: "mimmaya",
-      role: "Tech, Relationships & Healing Essayist",
-      bio: "I write about Tech, AI, Web-apps, Relationships, Motivation & Healing... where innovation meets what makes us human."
-    },
-    {
-      name: "Dua Batool",
-      username: "dbatool242",
-      role: "Published Author & Zoology Researcher",
-      bio: "Published Book Author | Zoology Student. Exploring society, human emotions, and untold realities through words that inspire reflection and meaningful dialogue."
-    },
-    {
-      name: "Jmactavish",
-      username: "jmactavish",
-      role: "Independent Creative Columnist",
-      bio: "Creative essayist and observer of human interactions, politics, and modern environments."
-    },
-    {
-      name: "Vikra K Krishnasamy",
-      username: "vikrakkrisnasamy",
-      role: "Cultural & Analytical Thinker",
-      bio: "Writing about human philosophy, technology intersections, and thoughts on growth."
-    },
-    {
-      name: "LC Squared",
-      username: "lc-squared",
-      role: "Human Resilience & Motherhood Essayist",
-      bio: "Writing about invisible exhaustion, reinvention, grief, motherhood, and the beautifully messy parts of being human."
-    },
-    {
-      name: "Michael Koyfman",
-      username: "michaelkoyfman",
-      role: "Politics, Finance & AI Student",
-      bio: "Hello! My name is Michael, a student who is incredibility interested in politics, finance, and artificial intelligence. Come check my blogs out!"
-    }
-  ]
-};
+const avatarCache = new Map<string, { url: string; expiresAt: number }>();
 
-const avatarCache = new Map<string, string>();
-
-// Active in-memory cache for stories, about info, and caching timestamp
 let cache: {
   stories: any[];
   about: any;
@@ -232,173 +24,132 @@ let cache: {
 } = {
   stories: [],
   about: null,
-  lastUpdated: 0
+  lastUpdated: 0,
 };
 
-// Ingest and cache Medium publication data in the background
+const MAX_PREFETCH_CONCURRENCY = 5;
+const PREFETCH_TIMEOUT = 8000;
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+async function fetchWithTimeout(url: string, timeout = PREFETCH_TIMEOUT): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchStoriesWithRetry(retries = 2): Promise<any[]> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const rss2JsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent("https://medium.com/feed/the-ink-home")}`;
+      const proxyRes = await fetchWithTimeout(rss2JsonUrl, 10000);
+      if (proxyRes.ok) {
+        const jsonPayload = await proxyRes.json();
+        if (jsonPayload && jsonPayload.status === "ok" && Array.isArray(jsonPayload.items) && jsonPayload.items.length > 0) {
+          return transformRSSItems(jsonPayload.items);
+        }
+      }
+    } catch (e) {
+      console.warn(`syncData Tier 1 attempt ${attempt + 1} failed:`, e);
+    }
+
+    if (attempt < retries) {
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+    }
+  }
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetchWithTimeout("https://medium.com/feed/the-ink-home", 10000);
+      if (response.ok) {
+        const xmlData = await response.text();
+        const parsed = parseMediumRSS(xmlData);
+        if (parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn(`syncData Tier 2 attempt ${attempt + 1} failed:`, e);
+    }
+
+    if (attempt < retries) {
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+    }
+  }
+
+  return [];
+}
+
 async function syncData() {
   console.log("Background sync: Starting data fetch...");
   let fetchedStories: any[] = [];
 
-  // Tier 1: Try public rss2json converter (handles Cloudflare bypassing and CORS nicely)
   try {
-    const rss2JsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent("https://medium.com/feed/the-ink-home")}`;
-    const proxyRes = await fetch(rss2JsonUrl);
-    if (proxyRes.ok) {
-      const jsonPayload = await proxyRes.json();
-      if (jsonPayload && jsonPayload.status === "ok" && Array.isArray(jsonPayload.items)) {
-        fetchedStories = jsonPayload.items.map((item: any) => {
-          let cover = "";
-          let content = item.content || item.description || "";
-          const imgMatches = content.match(/<img[^>]+src=["']([^"']+)["']/i);
-          if (imgMatches && imgMatches[1]) {
-            cover = imgMatches[1];
-          } else {
-            const randSeed = Math.abs(item.title.split("").reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0));
-            const presetCovers = [
-              "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-              "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?auto=format&fit=crop&w=1200&q=80",
-              "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1200&q=80",
-              "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1200&q=80",
-              "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80"
-            ];
-            cover = presetCovers[randSeed % presetCovers.length];
-          }
-
-          const author = item.author || "The Ink Home Team";
-          const authorAvatars: { [key: string]: string } = {
-            "Elena Rostov": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-            "Devon Vance": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
-            "Sophia Sterling": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-            "Marcus Chen": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80"
-          };
-          const avatar = authorAvatars[author] || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80`;
-
-          const authorRoles: { [key: string]: string } = {
-            "Elena Rostov": "Editor-in-Chief",
-            "Devon Vance": "AI Creative Lead",
-            "Sophia Sterling": "Senior Graphic Editor",
-            "Marcus Chen": "Interaction Director"
-          };
-          const role = authorRoles[author] || "Staff Editor";
-
-          let slug = "";
-          if (item.link) {
-            const parts = item.link.split("/");
-            const lastPart = parts[parts.length - 1];
-            slug = lastPart ? lastPart.split("?")[0] : "";
-          }
-          if (!slug) {
-            slug = item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-          }
-
-          const cleanSnippet = content
-            .replace(/<[^>]+>/g, " ")
-            .replace(/\s+/g, " ")
-            .trim()
-            .substring(0, 180) + "...";
-
-          return {
-            title: item.title,
-            link: item.link,
-            author,
-            role,
-            pubDate: item.pubDate,
-            categories: Array.isArray(item.categories) ? item.categories : ["Editorial"],
-            description: cleanSnippet,
-            content,
-            cover,
-            slug,
-            avatar
-          };
-        });
-      }
-    }
+    fetchedStories = await fetchStoriesWithRetry(2);
   } catch (e) {
-    console.warn("syncData Tier 1 failed:", e);
+    console.warn("syncData failed after retries:", e);
   }
 
-  // Tier 2: Try fetching directly from Medium RSS if rss2json was unavailable
-  if (fetchedStories.length === 0) {
-    try {
-      const response = await fetch("https://medium.com/feed/the-ink-home", {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.9"
-        }
-      });
-      if (response.ok) {
-        const xmlData = await response.text();
-        fetchedStories = parseMediumRSS(xmlData);
-      }
-    } catch (e) {
-      console.warn("syncData Tier 2 failed:", e);
-    }
-  }
-
-  // Deduplicate and fallback check
   let finalStories = fetchedStories;
   if (finalStories.length === 0) {
-    finalStories = [...DEFAULT_STORIES];
+    finalStories = DEFAULT_STORIES.map((s) => ({ ...s }));
   } else {
-    DEFAULT_STORIES.forEach(ds => {
+    DEFAULT_STORIES.forEach((ds) => {
       const alreadyExists = finalStories.some(
-        us => us.title.toLowerCase() === ds.title.toLowerCase() || us.slug === ds.slug
+        (us) => us.title.toLowerCase() === ds.title.toLowerCase() || us.slug === ds.slug
       );
       if (!alreadyExists) {
-        finalStories.push(ds);
+        finalStories.push({ ...ds });
       }
     });
   }
 
-  // 2. Fetch editors/writers "About" metadata
-  let updatedAbout = FALLBACK_ABOUT;
+  let updatedAbout = { ...FALLBACK_ABOUT, editors: FALLBACK_ABOUT.editors.map((e) => ({ ...e })), writers: FALLBACK_ABOUT.writers.map((w) => ({ ...w })) };
   try {
+    const editorAvatars = await prefetchAvatars(FALLBACK_ABOUT.editors, MAX_PREFETCH_CONCURRENCY);
+    const writerAvatars = await prefetchAvatars(FALLBACK_ABOUT.writers, MAX_PREFETCH_CONCURRENCY);
+
     updatedAbout = {
       description: FALLBACK_ABOUT.description,
       officialWebsite: FALLBACK_ABOUT.officialWebsite,
-      editors: await Promise.all(
-        FALLBACK_ABOUT.editors.map(async (e) => {
-          const avatar = await getMediumAvatarWithCache(e.username);
-          return {
-            ...e,
-            avatar: avatar || e.avatar
-          };
-        })
-      ),
-      writers: await Promise.all(
-        FALLBACK_ABOUT.writers.map(async (w) => {
-          const avatar = await getMediumAvatarWithCache(w.username);
-          return {
-            ...w,
-            avatar: avatar || (w as any).avatar || ""
-          };
-        })
-      )
+      editors: FALLBACK_ABOUT.editors.map((e, i) => ({ ...e, avatar: editorAvatars[i] || e.avatar })),
+      writers: FALLBACK_ABOUT.writers.map((w, i) => ({ ...w, avatar: writerAvatars[i] || (w as any).avatar || "" })),
     };
   } catch (e) {
     console.warn("syncData about fetch failed:", e);
   }
 
-  // Save to cache
   cache = {
     stories: finalStories,
     about: updatedAbout,
-    lastUpdated: Date.now()
+    lastUpdated: Date.now(),
   };
   console.log(`Background sync completed. Stories cached: ${finalStories.length}`);
 }
 
-// Intercept requested client pages and inject specific story/tab OpenGraph metadata dynamically
 async function serveSPAWithSEO(req: express.Request, res: express.Response, viteInstance?: any) {
   const slug = req.params.slug;
 
   if (cache.stories.length === 0) {
-    await syncData();
+    try {
+      await syncData();
+    } catch (e) {
+      console.warn("Initial syncData failed, falling back to defaults:", e);
+    }
   }
 
-  const story = cache.stories.find(s => s.slug === slug);
+  const story = cache.stories.find((s) => s.slug === slug);
 
   let title = "The Ink Home | Where Words Feel at Home";
   let description = "Where spatial typography, code shaders, and cyber-philosophical stories merge into floating geometric objects in space.";
@@ -413,46 +164,38 @@ async function serveSPAWithSEO(req: express.Request, res: express.Response, vite
   }
 
   try {
-    let htmlPath = "";
     const isProduction = process.env.NODE_ENV === "production";
+    const htmlPath = path.join(process.cwd(), isProduction ? "dist/index.html" : "index.html");
 
-    if (isProduction) {
-      htmlPath = path.join(process.cwd(), "dist/index.html");
-    } else {
-      htmlPath = path.join(process.cwd(), "index.html");
-    }
-
-    if (!fs.existsSync(htmlPath)) {
+    let html: string;
+    try {
+      html = fs.readFileSync(htmlPath, "utf8");
+    } catch (err) {
       if (isProduction) {
         return res.status(404).send("Application not compiled yet. Run npm run build first.");
-      } else {
-        return res.sendFile(htmlPath);
       }
+      throw err;
     }
-
-    let html = fs.readFileSync(htmlPath, "utf8");
 
     if (!isProduction && viteInstance) {
       html = await viteInstance.transformIndexHtml(req.originalUrl, html);
     }
 
-    // Dynamic SEO tags injection
-    const metaTags = `
-    <!-- Dynamic SEO tags injected by Express server -->
-    <title>${title}</title>
-    <meta name="description" content="${description.replace(/"/g, "&quot;")}" />
-    <meta property="og:title" content="${title.replace(/"/g, "&quot;")}" />
-    <meta property="og:description" content="${description.replace(/"/g, "&quot;")}" />
-    <meta property="og:image" content="${cover}" />
-    <meta property="og:url" content="${url}" />
-    <meta property="og:type" content="article" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${title.replace(/"/g, "&quot;")}" />
-    <meta name="twitter:description" content="${description.replace(/"/g, "&quot;")}" />
-    <meta name="twitter:image" content="${cover}" />
-    `;
+    const metaTags = [
+      `<!-- Dynamic SEO tags injected by Express server -->`,
+      `<title>${escapeHtml(title)}</title>`,
+      `<meta name="description" content="${escapeHtml(description)}" />`,
+      `<meta property="og:title" content="${escapeHtml(title)}" />`,
+      `<meta property="og:description" content="${escapeHtml(description)}" />`,
+      `<meta property="og:image" content="${escapeHtml(cover)}" />`,
+      `<meta property="og:url" content="${escapeHtml(url)}" />`,
+      `<meta property="og:type" content="article" />`,
+      `<meta name="twitter:card" content="summary_large_image" />`,
+      `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
+      `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
+      `<meta name="twitter:image" content="${escapeHtml(cover)}" />`,
+    ].join("\n    ");
 
-    // Replace the default title or insert directly in head
     if (html.includes("<title>")) {
       html = html.replace(/<title>[\s\S]*?<\/title>/i, "");
     }
@@ -461,322 +204,188 @@ async function serveSPAWithSEO(req: express.Request, res: express.Response, vite
     res.status(200).set({ "Content-Type": "text/html" }).end(html);
   } catch (err) {
     console.error("SEO Injection failed:", err);
-    if (process.env.NODE_ENV === "production") {
-      res.sendFile(path.join(process.cwd(), "dist/index.html"));
-    } else {
-      res.sendFile(path.join(process.cwd(), "index.html"));
+    const isProduction = process.env.NODE_ENV === "production";
+    const fallbackPath = path.join(process.cwd(), isProduction ? "dist/index.html" : "index.html");
+    try {
+      res.sendFile(fallbackPath);
+    } catch (sendErr) {
+      res.status(500).send("Unable to serve application.");
     }
   }
 }
 
+const isPlaceholderUrl = (url: string): boolean => {
+  if (!url) return true;
+  const lowerUrl = url.toLowerCase();
+  return (
+    lowerUrl.includes("10fd5c419ac61637245384e7099e131627900034828f4f386bdaa47a74eae156") ||
+    lowerUrl.includes("avatar/default") ||
+    lowerUrl.includes("dn-uploads")
+  );
+};
+
+const OG_IMAGE_RE = /<meta[^>]+property\s*=\s*["']og:image["'][^>]*content\s*=\s*["']([^"']+)["']/i;
+const OG_IMAGE_RE2 = /<meta[^>]+content\s*=\s*["']([^"']+)["'][^>]*property\s*=\s*["']og:image["']/i;
+const TWITTER_IMAGE_RE = /<meta[^>]+name\s*=\s*["']twitter:image["'][^>]*content\s*=\s*["']([^"']+)["']/i;
+const APPLE_TOUCH_ICON_RE = /<link[^>]+rel\s*=\s*["']apple-touch-icon["'][^>]*href\s*=\s*["']([^"']+)["']/i;
+
+async function resolveAvatarFromHtml(html: string): Promise<string | null> {
+  const ogMatch = html.match(OG_IMAGE_RE) || html.match(OG_IMAGE_RE2) || html.match(TWITTER_IMAGE_RE) || html.match(APPLE_TOUCH_ICON_RE);
+  if (ogMatch && ogMatch[1]) {
+    const imgUrl = ogMatch[1].trim();
+    if (imgUrl && imgUrl.startsWith("http") && !isPlaceholderUrl(imgUrl)) {
+      return imgUrl;
+    }
+  }
+  return null;
+}
+
 async function getMediumAvatarWithCache(username: string): Promise<string> {
   const cacheKey = username.toLowerCase().trim();
-  if (avatarCache.has(cacheKey)) {
-    return avatarCache.get(cacheKey) || "";
+  const cached = avatarCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.url;
   }
 
-  // Base list of beautiful curated fallback portraits for real-time fallback protection
-  const premiumFallbacks: { [key: string]: string } = {
-    "farhankabir133": "https://miro.medium.com/v2/resize:fit:2400/1*OonAmXM0uBzGf_KYL3s85w.png",
-    "dbatool242": "https://miro.medium.com/v2/resize:fit:2400/1*4o35ax2_LSaOtP-3Lfi0Eg.jpeg",
-    "yiwanye": "https://miro.medium.com/v2/da:true/resize:fit:2400/0*UtfdEWoDpfcG0zQE",
-    "soamidayakrishnananda": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=304&h=304&q=80",
-    "annajaworska": "https://miro.medium.com/v2/resize:fit:2400/0*_D8djmuiTP88tAfM.jpeg",
-    "marmanrezashah": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=304&h=304&q=80",
-    "achellesantos": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=304&h=304&q=80",
-    "amberfaulk": "https://miro.medium.com/v2/da:true/resize:fit:2400/0*p2SLJ4oqFubl4-Fw",
-    "paushalidas": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=304&h=304&q=80",
-    "sadmantaqi": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=304&h=304&q=80",
-    "taibamansuri": "https://miro.medium.com/v2/resize:fit:2400/1*1dpRDcpKeFMMpwXY2PT8nw.jpeg",
-    "claudiocasella": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=304&h=304&q=80",
-    "amooridwan": "https://images.unsplash.com/photo-1513956589380-bad6acb9b9d4?auto=format&fit=crop&w=304&h=304&q=80",
-    "logeshtv": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=304&h=304&q=80",
-    "mimmaya": "https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=crop&w=304&h=304&q=80",
-    "adammcclarin": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=304&h=304&q=80",
-    "mabelpenrose": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=304&h=304&q=80",
+  const premiumFallbacks: Record<string, string> = {
+    farhankabir133: "https://miro.medium.com/v2/resize:fit:2400/1*OonAmXM0uBzGf_KYL3s85w.png",
+    dbatool242: "https://miro.medium.com/v2/resize:fit:2400/1*4o35ax2_LSaOtP-3Lfi0Eg.jpeg",
+    yiwanye: "https://miro.medium.com/v2/da:true/resize:fit:2400/0*UtfdEWoDpfcG0zQE",
+    soamidayakrishnananda: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=304&h=304&q=80",
+    annajaworska: "https://miro.medium.com/v2/resize:fit:2400/0*_D8djmuiTP88tAfM.jpeg",
+    marmanrezashah: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=304&h=304&q=80",
+    achellesantos: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=304&h=304&q=80",
+    amberfaulk: "https://miro.medium.com/v2/da:true/resize:fit:2400/0*p2SLJ4oqFubl4-Fw",
+    paushalidas: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=304&h=304&q=80",
+    sadmantaqi: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=304&h=304&q=80",
+    taibamansuri: "https://miro.medium.com/v2/resize:fit:2400/1*1dpRDcpKeFMMpwXY2PT8nw.jpeg",
+    claudiocasella: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=304&h=304&q=80",
+    amooridwan: "https://images.unsplash.com/photo-1513956589380-bad6acb9b9d4?auto=format&fit=crop&w=304&h=304&q=80",
+    logeshtv: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=304&h=304&q=80",
+    mimmaya: "https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=crop&w=304&h=304&q=80",
+    adammcclarin: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=304&h=304&q=80",
+    mabelpenrose: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=304&h=304&q=80",
     "mabel-penrose": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=304&h=304&q=80",
-    "jmactavish": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=304&h=304&q=80",
-    "vikrakkrisnasamy": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=304&h=304&q=80",
-    "vikrakkrishnasamy": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=304&h=304&q=80",
+    jmactavish: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=304&h=304&q=80",
+    vikrakkrisnasamy: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=304&h=304&q=80",
+    vikrakkrishnasamy: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=304&h=304&q=80",
     "lc-squared": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=304&h=304&q=80",
-    "lcsquared": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=304&h=304&q=80",
-    "michaelkoyfman": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=304&h=304&q=80"
+    lcsquared: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=304&h=304&q=80",
+    michaelkoyfman: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=304&h=304&q=80",
   };
 
-  const isPlaceholderUrl = (url: string): boolean => {
-    if (!url) return true;
-    const lowerUrl = url.toLowerCase();
-    return (
-      lowerUrl.includes("10fd5c419ac61637245384e7099e131627900034828f4f386bdaa47a74eae156") ||
-      lowerUrl.includes("avatar/default") ||
-      lowerUrl.includes("dn-uploads")
-    );
-  };
-
-  // Tier 1: Direct Fetch with high-fidelity agent headers (We proved this gets a 100% success response on Cloud Run if bypassed)
   try {
     const profileUrl = "https://medium.com/@" + username;
-    const response = await fetch(profileUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9"
-      }
-    });
+    const response = await fetchWithTimeout(profileUrl, 10000);
     if (response.ok) {
       const html = await response.text();
-      if (html) {
-        const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) || 
-                        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ||
-                        html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i) ||
-                        html.match(/<link[^>]+rel=["']apple-touch-icon["'][^>]+href=["']([^"']+)["']/i);
-        if (ogMatch && ogMatch[1]) {
-          const imgUrl = ogMatch[1].trim();
-          if (imgUrl && imgUrl.startsWith("http") && !isPlaceholderUrl(imgUrl)) {
-            avatarCache.set(cacheKey, imgUrl);
-            return imgUrl;
-          }
-        }
+      const imgUrl = await resolveAvatarFromHtml(html);
+      if (imgUrl) {
+        avatarCache.set(cacheKey, { url: imgUrl, expiresAt: Date.now() + AVATAR_CACHE_TTL });
+        return imgUrl;
       }
     }
   } catch (err) {
-    // Fail silently, go to Tier 2
+    console.warn("Tier 1 avatar fetch failed:", err);
   }
 
-  // Tier 2: Try rss2json proxy on user RSS feed (which has channel image)
   try {
     const userFeedUrl = `https://medium.com/feed/@${username}`;
     const rss2JsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(userFeedUrl)}`;
-    const res = await fetch(rss2JsonUrl);
+    const res = await fetchWithTimeout(rss2JsonUrl, 10000);
     if (res.ok) {
       const data = await res.json();
       if (data && data.status === "ok" && data.feed && data.feed.image) {
         const imgUrl = data.feed.image.trim();
         if (imgUrl && imgUrl.startsWith("http") && !isPlaceholderUrl(imgUrl)) {
-          avatarCache.set(cacheKey, imgUrl);
+          avatarCache.set(cacheKey, { url: imgUrl, expiresAt: Date.now() + AVATAR_CACHE_TTL });
           return imgUrl;
         }
       }
     }
   } catch (err) {
-    // Fail silently, go to Tier 3
+    console.warn("Tier 2 avatar fetch failed:", err);
   }
 
-  // Tier 3: Try AllOrigins proxy to scrape the actual OG image from the Medium profile page (completely bypasses Cloudflare blocks)
   try {
     const profileUrl = "https://medium.com/@" + username;
     const allOriginsUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(profileUrl)}`;
-    const response = await fetch(allOriginsUrl);
+    const response = await fetchWithTimeout(allOriginsUrl, 10000);
     if (response.ok) {
       const data = await response.json();
       const html = data && data.contents;
       if (html) {
-        const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) || 
-                        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ||
-                        html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i) ||
-                        html.match(/<link[^>]+rel=["']apple-touch-icon["'][^>]+href=["']([^"']+)["']/i);
-        if (ogMatch && ogMatch[1]) {
-          const imgUrl = ogMatch[1].trim();
-          if (imgUrl && imgUrl.startsWith("http") && !isPlaceholderUrl(imgUrl)) {
-            avatarCache.set(cacheKey, imgUrl);
-            return imgUrl;
-          }
+        const imgUrl = await resolveAvatarFromHtml(html);
+        if (imgUrl) {
+          avatarCache.set(cacheKey, { url: imgUrl, expiresAt: Date.now() + AVATAR_CACHE_TTL });
+          return imgUrl;
         }
       }
     }
   } catch (err) {
-    // Fail silently, proceed to Tier 4
+    console.warn("Tier 3 avatar fetch failed:", err);
   }
 
-  // Tier 4: Fall back to Unavatar service which proxies and resolves Medium avatars directly
   try {
     const unavatarUrl = `https://unavatar.io/medium/${username}`;
-    const response = await fetch(unavatarUrl, { method: "HEAD" });
+    const response = await fetchWithTimeout(unavatarUrl, 8000);
     if (response.ok && response.url && !isPlaceholderUrl(response.url)) {
-      avatarCache.set(cacheKey, response.url);
+      avatarCache.set(cacheKey, { url: response.url, expiresAt: Date.now() + AVATAR_CACHE_TTL });
       return response.url;
     }
   } catch (err) {
-    // Fallback to static portrait preserver
+    console.warn("Tier 4 avatar fetch failed:", err);
   }
 
-  // Tier 5: Return curated professional fallback portrait corresponding to the writer
   const fallback = premiumFallbacks[cacheKey] || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=304&h=304&q=80";
-  avatarCache.set(cacheKey, fallback);
+  avatarCache.set(cacheKey, { url: fallback, expiresAt: Date.now() + AVATAR_CACHE_TTL });
   return fallback;
 }
 
-function prefetchAvatars(aboutData: typeof FALLBACK_ABOUT) {
-  console.log("Starting silent prefetch of Medium profile images...");
-  const allScribes = [...aboutData.editors, ...aboutData.writers];
-  
-  Promise.all(
-    allScribes.map(async (scribe) => {
-      if (scribe.username) {
-        await getMediumAvatarWithCache(scribe.username);
+async function prefetchAvatars<T extends { username?: string; avatar?: string }>(
+  entities: T[],
+  concurrency = MAX_PREFETCH_CONCURRENCY
+): Promise<(string | undefined)[]> {
+  const results: (string | undefined)[] = new Array(entities.length);
+  let index = 0;
+
+  async function worker() {
+    while (index < entities.length) {
+      const current = index++;
+      const entity = entities[current];
+      if (entity && entity.username) {
+        try {
+          results[current] = await getMediumAvatarWithCache(entity.username);
+        } catch {
+          results[current] = entity.avatar;
+        }
+      } else {
+        results[current] = entity?.avatar;
       }
-    })
-  ).catch(() => {});
-}
-
-// Parser helper for Medium RSS Feed
-function parseMediumRSS(xmlText: string) {
-  const items: any[] = [];
-  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-  let match;
-  
-  while ((match = itemRegex.exec(xmlText)) !== null) {
-    const itemContent = match[1];
-    
-    // Extract Title
-    let title = "Untitled Story";
-    const titleMatch = itemContent.match(/<title>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/title>/);
-    if (titleMatch) {
-      title = (titleMatch[1] || titleMatch[2] || "").trim();
     }
-    
-    // Extract Link
-    let link = "";
-    const linkMatch = itemContent.match(/<link>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/link>/);
-    if (linkMatch) {
-      link = (linkMatch[1] || linkMatch[2] || "").trim();
-    }
-    
-    // Extract Creator/Author
-    let author = "The Ink Home Team";
-    const creatorMatch = itemContent.match(/<dc:creator>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/dc:creator>/) ||
-                         itemContent.match(/<creator>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/creator>/);
-    if (creatorMatch) {
-      author = (creatorMatch[1] || creatorMatch[2] || "").trim();
-    }
-    
-    // Extract PubDate
-    let pubDate = new Date().toUTCString();
-    const pubDateMatch = itemContent.match(/<pubDate>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/pubDate>/);
-    if (pubDateMatch) {
-      pubDate = (pubDateMatch[1] || pubDateMatch[2] || "").trim();
-    }
-    
-    // Extract Tags/Categories
-    const categoryRegex = /<category>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))<\/category>/g;
-    const categories: string[] = [];
-    let catMatch;
-    while ((catMatch = categoryRegex.exec(itemContent)) !== null) {
-      categories.push((catMatch[1] || catMatch[2] || "").trim());
-    }
-    if (categories.length === 0) {
-      categories.push("Editorial", "The Ink Home");
-    }
-    
-    // Extract Content
-    let content = "";
-    const contentMatch = itemContent.match(/<content:encoded>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/content:encoded>/) ||
-                         itemContent.match(/<description>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/description>/);
-    if (contentMatch) {
-      content = (contentMatch[1] || contentMatch[2] || "").trim();
-    }
-    
-    // Extract cover image
-    let cover = "";
-    const imgRegex = /<img[^>]+src=["']([^"']+)["']/i;
-    const imgMatch = content.match(imgRegex);
-    if (imgMatch && imgMatch[1]) {
-      cover = imgMatch[1];
-    } else {
-      // Rotate static unsplash high quality architectural images as beautiful defaults
-      const randSeed = Math.abs(title.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0));
-      const presetCovers = [
-        "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80"
-      ];
-      cover = presetCovers[randSeed % presetCovers.length];
-    }
-    
-    // Create custom avatars for authors
-    const authorAvatars: { [key: string]: string } = {
-      "Elena Rostov": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-      "Devon Vance": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
-      "Sophia Sterling": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-      "Marcus Chen": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80"
-    };
-    const avatar = authorAvatars[author] || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80`;
-    
-    // Generate role from author name
-    const authorRoles: { [key: string]: string } = {
-      "Elena Rostov": "Editor-in-Chief",
-      "Devon Vance": "AI Creative Lead",
-      "Sophia Sterling": "Senior Graphic Editor",
-      "Marcus Chen": "Interaction Director"
-    };
-    const role = authorRoles[author] || "Staff Editor";
-
-    // Create unique slug
-    let slug = "";
-    if (link) {
-      const parts = link.split("/");
-      const lastPart = parts[parts.length - 1];
-      slug = lastPart ? lastPart.split("?")[0] : "";
-    }
-    if (!slug) {
-      slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    }
-    
-    // Clean snippet
-    const cleanSnippet = content
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .substring(0, 180) + "...";
-      
-    items.push({
-      title,
-      link,
-      author,
-      role,
-      pubDate,
-      categories,
-      description: cleanSnippet,
-      content,
-      cover,
-      slug,
-      avatar
-    });
   }
-  
-  return items;
+
+  const workers = Array.from({ length: Math.min(concurrency, entities.length) }, () => worker());
+  await Promise.allSettled(workers);
+  return results;
 }
+
+
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
-  // Programmatically copy The_Ink_Home.webp logo to public/assets for reliable Vite integration
-  try {
-    const srcDir = path.join(process.cwd(), "assets");
-    const destDir = path.join(process.cwd(), "public/assets");
-    const srcFile = path.join(srcDir, "The_Ink_Home.webp");
-    const destFile = path.join(destDir, "The_Ink_Home.webp");
+  app.use(compression());
 
-    if (!fs.existsSync(destDir)) {
-      fs.mkdirSync(destDir, { recursive: true });
-    }
-    if (fs.existsSync(srcFile)) {
-      fs.copyFileSync(srcFile, destFile);
-      console.log("Successfully synchronized Logo asset to public/assets/The_Ink_Home.webp");
-    } else {
-      console.warn("Source logo file not found at:", srcFile);
-    }
-  } catch (err) {
-    console.error("Failed to copy logo asset: ", err);
-  }
+  app.use(express.json({ limit: "100kb" }));
+  app.use(express.text({ type: "application/json", limit: "100kb" }));
 
-  app.use(express.json());
-  app.use(express.text({ type: "application/json" })); // support sendBeacon raw strings
+  app.use((req, res, next) => {
+    res.set("Cache-Control", "no-store");
+    next();
+  });
 
-  // Helmet middleware with tailored rules to allow external CDN elements
   app.use(
     helmet({
       contentSecurityPolicy: false,
@@ -784,39 +393,58 @@ async function startServer() {
     })
   );
 
-  // API Rate Limiting to prevent spamming
+  const requestLogger = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const start = Date.now();
+    res.on("finish", () => {
+      const duration = Date.now() - start;
+      console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${duration}ms)`);
+    });
+    next();
+  };
+  app.use(requestLogger);
+
   const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 mins
-    max: 100, // limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: "Too many requests, please try again later" }
+    message: { error: "Too many requests, please try again later" },
   });
   app.use("/api/", apiLimiter);
 
-  // Trigger cache background sync cycle
-  syncData().catch(err => console.error("Initial data sync failed:", err));
-  setInterval(() => {
-    syncData().catch(err => console.error("Background data sync failed:", err));
-  }, 15 * 60 * 1000);
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({
+      status: "ok",
+      uptime: process.uptime(),
+      stories: cache.stories.length,
+      lastSync: new Date(cache.lastUpdated).toISOString(),
+    });
+  });
 
-  // API Route: Get Medium Stories with dynamic cache serving
   app.get("/api/stories", async (req, res) => {
+    res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
     if (cache.stories.length === 0) {
-      await syncData();
+      try {
+        await syncData();
+      } catch (err) {
+        console.error("Initial data sync failed:", err);
+      }
     }
     res.json({ source: "cache", stories: cache.stories });
   });
 
-  // API Route: Get Editors & Writers from "About" page from cache
   app.get("/api/about", async (req, res) => {
+    res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
     if (!cache.about) {
-      await syncData();
+      try {
+        await syncData();
+      } catch (err) {
+        console.error("Initial about sync failed:", err);
+      }
     }
-    res.json(cache.about);
+    res.json(cache.about || FALLBACK_ABOUT);
   });
 
-  // API Route: Telemetry tracking endpoint for frontend newsletter signups
   app.post("/api/track", (req, res) => {
     let payload = req.body;
     if (typeof payload === "string") {
@@ -829,37 +457,72 @@ async function startServer() {
     res.status(200).json({ success: true, message: "Telemetry received successfully" });
   });
 
-  // Vite instance declaration and middleware setup for dev environment
   let vite: any;
   if (process.env.NODE_ENV !== "production") {
     vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
-    // Register Vite middleware first to resolve dev asset modules (like ?import) and handle dev routing fallbacks
     app.use(vite.middlewares);
   } else {
-    // Serve raw assets directory in production
-    app.use("/assets", express.static(path.join(process.cwd(), "assets")));
+    app.use("/assets", express.static(path.join(process.cwd(), "assets"), { maxAge: "1y", immutable: true }));
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, { maxAge: "1y", immutable: true }));
 
-    // Intercept client routes in production for dynamic SEO tags injection
+    app.use("/api/stories", (req, res, next) => {
+      res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+      next();
+    });
+    app.use("/api/about", (req, res, next) => {
+      res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+      next();
+    });
+
     app.get(["/", "/3d", "/grid", "/list", "/about", "/saved", "/story/:slug"], async (req, res) => {
       await serveSPAWithSEO(req, res);
     });
 
-    // Production catch-all SPA fallback
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`The Ink Home Server running on http://localhost:${PORT}`);
-    prefetchAvatars(FALLBACK_ABOUT);
+    prefetchAvatars(FALLBACK_ABOUT.editors, MAX_PREFETCH_CONCURRENCY);
+    prefetchAvatars(FALLBACK_ABOUT.writers, MAX_PREFETCH_CONCURRENCY);
   });
+
+  server.on("error", (err) => {
+    console.error("Server failed to start:", err);
+    process.exit(1);
+  });
+
+  const gracefulShutdown = () => {
+    console.log("Shutting down gracefully...");
+    server.close(() => {
+      console.log("Server closed.");
+      process.exit(0);
+    });
+    setTimeout(() => {
+      console.error("Forced shutdown due to timeout");
+      process.exit(1);
+    }, 5000);
+  };
+
+  process.on("SIGTERM", gracefulShutdown);
+  process.on("SIGINT", gracefulShutdown);
+  process.on("uncaughtException", (err) => {
+    console.error("Uncaught exception:", err);
+  });
+  process.on("unhandledRejection", (reason) => {
+    console.error("Unhandled rejection:", reason);
+  });
+
+  return server;
 }
 
-startServer();
-
+startServer().catch((err) => {
+  console.error("Startup failed:", err);
+  process.exit(1);
+});

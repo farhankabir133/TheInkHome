@@ -131,6 +131,10 @@ export default function StoryModal({
                 src={story.cover || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80"}
                 alt={story.title}
                 referrerPolicy="no-referrer"
+                width="1200"
+                height="600"
+                sizes="100vw"
+                decoding="async"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;

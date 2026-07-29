@@ -21,7 +21,7 @@ export default function AtmosphereDeck({ bgMode, setBgMode }: AtmosphereDeckProp
         }`}
         title="Stellar Universe Node"
       >
-          <span className={`w-1 h-1 rounded-full ${bgMode === "stellar" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+          <span className={`w-1 h-1 rounded-full ${bgMode === "stellar" ? "bg-black" : "bg-current opacity-70"}`} />
         Cosmic
       </button>
       <button
@@ -33,7 +33,7 @@ export default function AtmosphereDeck({ bgMode, setBgMode }: AtmosphereDeckProp
         }`}
         title="Flowing Writer's Ink"
       >
-          <span className={`w-1 h-1 rounded-full ${bgMode === "ink" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+          <span className={`w-1 h-1 rounded-full ${bgMode === "ink" ? "bg-black" : "bg-current opacity-70"}`} />
         Ink
       </button>
       <button
@@ -45,7 +45,7 @@ export default function AtmosphereDeck({ bgMode, setBgMode }: AtmosphereDeckProp
         }`}
         title="Cozy Forest Cabin Embers"
       >
-          <span className={`w-1 h-1 rounded-full ${bgMode === "forest" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+          <span className={`w-1 h-1 rounded-full ${bgMode === "forest" ? "bg-black" : "bg-current opacity-70"}`} />
         Cabin
       </button>
       <button
@@ -57,7 +57,7 @@ export default function AtmosphereDeck({ bgMode, setBgMode }: AtmosphereDeckProp
         }`}
         title="Thought Constellations Network"
       >
-          <span className={`w-1 h-1 rounded-full ${bgMode === "constellation" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+          <span className={`w-1 h-1 rounded-full ${bgMode === "constellation" ? "bg-black" : "bg-current opacity-70"}`} />
         Neural
       </button>
     </div>

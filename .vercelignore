@@ -1,15 +1,3 @@
-# Ignore everything
-*
-
-# But not these files...
-!/vercel.json
-!/package.json
-!/package-lock.json
-!/vite.config.ts
-!/tsconfig.json
-!/index.html
-
-# And not these directories...
-!/src
-!/assets
-!/api
+.git
+node_modules
+dist

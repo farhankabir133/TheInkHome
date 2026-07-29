@@ -98,6 +98,10 @@ export default function StoryGrid({
                   src={story.cover || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"}
                   alt={story.title}
                   referrerPolicy="no-referrer"
+                  width="400"
+                  height="300"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   loading="lazy"
                   onError={(e) => {

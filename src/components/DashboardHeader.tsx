@@ -79,9 +79,9 @@ export default function DashboardHeader({
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={`py-2 px-2.5 rounded-full flex flex-col items-center gap-0.5 transition-all relative ${
-                activeTab === tab.id
-                  ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105 animate-pulse"
-                  : "text-slate-400"
+activeTab === tab.id
+                    ? "text-[var(--glow-text)] bg-white/5 font-extrabold scale-105"
+                    : "text-slate-400"
               }`}
             >
               {tab.icon}

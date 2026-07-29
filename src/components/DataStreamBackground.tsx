@@ -58,7 +58,7 @@ class StreamClass {
   angle: number;
 
   constructor(canvasWidth: number, canvasHeight: number) {
-    this.totalSymbols = Math.round(Math.random() * 20 + 5);
+    this.totalSymbols = 5;
     this.speed = Math.random() * 2 + 1;
     this.angle = (Math.PI / 4) + (Math.random() * 0.4 - 0.2);
 
@@ -101,6 +101,7 @@ const DataStreamBackground: React.FC<{ baseHue?: number }> = ({ baseHue = 180 })
   const mouse = useRef({ x: 0, y: 0, radius: 100 });
   const hue = useRef(baseHue);
   const streamsRef = useRef<StreamClass[]>([]);
+  const animationFrameId = useRef<number | null>(null);
 
   useEffect(() => {
     hue.current = baseHue;
@@ -109,12 +110,13 @@ const DataStreamBackground: React.FC<{ baseHue?: number }> = ({ baseHue = 180 })
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: false });
     if (!ctx) return;
 
     if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const streamCount = 100;
+    const streamCount = 20;
+    let isActive = true;
 
     const init = () => {
       canvas.width = window.innerWidth;
@@ -127,11 +129,14 @@ const DataStreamBackground: React.FC<{ baseHue?: number }> = ({ baseHue = 180 })
       }
     };
 
-    let animationFrameId: number;
-
     const animate = () => {
+      if (!isActive) return;
+      
+      const prevFillStyle = ctx.fillStyle;
       ctx.fillStyle = 'rgba(5, 5, 5, 0.1)';
+      ctx.globalCompositeOperation = 'source-over';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = prevFillStyle;
       ctx.font = '16px monospace';
 
       hue.current = (hue.current + 0.5) % 360;
@@ -140,7 +145,7 @@ const DataStreamBackground: React.FC<{ baseHue?: number }> = ({ baseHue = 180 })
         stream.updateAndDraw(ctx, canvas.width, canvas.height, hue.current, mouse.current.x, mouse.current.y, mouse.current.radius)
       );
 
-      animationFrameId = requestAnimationFrame(animate);
+      animationFrameId.current = requestAnimationFrame(animate);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -148,14 +153,23 @@ const DataStreamBackground: React.FC<{ baseHue?: number }> = ({ baseHue = 180 })
       mouse.current.y = e.clientY;
     };
 
+    const handleResize = () => {
+      init();
+    };
+
     init();
     animate();
 
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('resize', handleResize);
 
     return () => {
+      isActive = false;
       window.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', handleResize);
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
     };
   }, []);
 

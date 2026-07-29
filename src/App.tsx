@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from "motion/react";
 import { Story } from "./types";
 
 const Carousel3D = lazy(() => import("./components/Carousel3D"));
-import StoryGrid from "./components/StoryGrid";
-import StoryList from "./components/StoryList";
-import AuthorsSection from "./components/AuthorsSection";
-import SubmissionGuideline from "./components/SubmissionGuideline";
-import StoryModal from "./components/StoryModal";
+const StoryGrid = lazy(() => import("./components/StoryGrid"));
+const StoryList = lazy(() => import("./components/StoryList"));
+const AuthorsSection = lazy(() => import("./components/AuthorsSection"));
+const SubmissionGuideline = lazy(() => import("./components/SubmissionGuideline"));
+const StoryModal = lazy(() => import("./components/StoryModal"));
+import AvatarImage from "./components/AvatarImage";
 import { Logo } from "./components/Logo";
 import DataStreamBackground from "./components/DataStreamBackground";
 import CinematicLoader from "./components/CinematicLoader";
@@ -32,9 +33,11 @@ import {
   Bookmark,
   Feather,
   MoreHorizontal,
-  Menu
+  Menu,
+  ArrowUpRight
 } from "lucide-react";
 import Subscribe from "./components/Subscribe";
+import { getLikesCount } from "./lib/interaction";
 
 export default function App() {
   // Initialize stories from local fallback for instant rendering on static hosts
@@ -54,6 +57,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<"3d" | "grid" | "list" | "authors" | "saved" | "guideline">("3d");
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [cinematicComplete, setCinematicComplete] = useState(false);
+  const [isWelcomeHome, setIsWelcomeHome] = useState(false);
 
   const pendingSlugRef = useRef<string | null>(null);
 
@@ -115,6 +119,7 @@ export default function App() {
       if (path === "/" || path === "") {
         setEntered(false);
         setSelectedStory(null);
+        setIsWelcomeHome(false);
       } else if (path === "/3d") {
         setEntered(true);
         setActiveTab("3d");
@@ -746,6 +751,7 @@ export default function App() {
   };
 
   const enterWebsite = () => {
+    setIsWelcomeHome(true);
     setEntered(true);
     setCinematicComplete(false);
     navigateTo("/" + (activeTab === "authors" ? "about" : activeTab));
@@ -767,9 +773,9 @@ export default function App() {
        data-atmosphere={bgMode}
        className="relative min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden selection:bg-[var(--atmo-text)]/30 selection:text-white"
      >
-        {!cinematicComplete && (
-          <CinematicLoader onComplete={handleCinematicComplete} />
-        )}
+{!cinematicComplete && (
+           <CinematicLoader onComplete={handleCinematicComplete} isWelcomeHome={isWelcomeHome} />
+         )}
        
        <DataStreamBackground baseHue={bgMode === "stellar" ? 190 : bgMode === "ink" ? 235 : bgMode === "forest" ? 35 : bgMode === "constellation" ? 160 : 190} />
        
@@ -792,7 +798,7 @@ export default function App() {
         }`}
         title="Stellar Universe Node"
       >
-        <span className={`w-1 h-1 rounded-full ${bgMode === "stellar" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+        <span className={`w-1 h-1 rounded-full ${bgMode === "stellar" ? "bg-black" : "bg-current opacity-70"}`} />
         Cosmic
       </button>
       <button
@@ -804,7 +810,7 @@ export default function App() {
         }`}
         title="Flowing Writer's Ink"
       >
-        <span className={`w-1 h-1 rounded-full ${bgMode === "ink" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+        <span className={`w-1 h-1 rounded-full ${bgMode === "ink" ? "bg-black" : "bg-current opacity-70"}`} />
         Ink
       </button>
       <button
@@ -816,7 +822,7 @@ export default function App() {
         }`}
         title="Cozy Forest Cabin Embers"
       >
-        <span className={`w-1 h-1 rounded-full ${bgMode === "forest" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+        <span className={`w-1 h-1 rounded-full ${bgMode === "forest" ? "bg-black" : "bg-current opacity-70"}`} />
         Cabin
       </button>
       <button
@@ -828,7 +834,7 @@ export default function App() {
         }`}
         title="Thought Constellations Network"
       >
-        <span className={`w-1 h-1 rounded-full ${bgMode === "constellation" ? "bg-black animate-pulse" : "bg-current opacity-70"}`} />
+        <span className={`w-1 h-1 rounded-full ${bgMode === "constellation" ? "bg-black" : "bg-current opacity-70"}`} />
         Neural
         </button>
       </div>
@@ -871,7 +877,12 @@ export default function App() {
             className="relative min-h-screen flex flex-col justify-between z-10 px-6 py-8"
           >
             {/* Top Logotype Row */}
-            <header className="w-full flex items-center justify-between">
+            <motion.header
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+              className="w-full flex items-center justify-between max-w-6xl mx-auto"
+            >
               <div className="flex items-center gap-2.5">
                 <Logo size={46} textColor="text-slate-200" />
               </div>
@@ -884,7 +895,7 @@ export default function App() {
               >
                 MEDIUM EDITION <ExternalLink className="w-3 h-3 text-[var(--atmo-text)]" />
               </a>
-            </header>
+            </motion.header>
 
             {/* Core Cinematic Hero */}
             <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6 sm:space-y-8 max-w-4xl mx-auto my-8 sm:my-12">
@@ -916,80 +927,194 @@ export default function App() {
               </motion.div>
  
               {/* Enter CTA Trigger BUTTON */}
-                 <motion.div
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1, delay: 0.6 }}
-                >
-                  <button
-                    onClick={enterWebsite}
-                    className="px-6 py-3 sm:px-8 sm:py-4 bg-white text-black font-extrabold uppercase tracking-[0.2em] text-[10px] sm:text-[11px] hover:bg-[var(--atmo-text)] hover:scale-102 hover:shadow-[0_0_35px_var(--atmo-glow)] transition-all duration-300 cursor-pointer flex items-center gap-2 z-20 mx-auto"
-                    id="enter-portal-btn"
-                  >
-                    Enter The Ink Home
-                    <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black" />
-                  </button>
-                </motion.div>
+<motion.div
+                   initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                   animate={{ opacity: 1, y: 0, scale: 1 }}
+                   transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+                 >
+                   <button
+                     onClick={enterWebsite}
+                     className="px-6 py-3 sm:px-8 sm:py-4 bg-white text-black font-extrabold uppercase tracking-[0.2em] text-[10px] sm:text-[11px] hover:bg-[var(--atmo-text)] hover:shadow-[0_0_35px_var(--atmo-glow)] transition-all duration-300 cursor-pointer flex items-center gap-2 z-20 mx-auto"
+                     id="enter-portal-btn"
+                   >
+                     Enter The Ink Home
+                     <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black" />
+                   </button>
+                 </motion.div>
             </div>
 
             {/* Bottom Section: Auto-scrolling Featured Stories Cinematic strip */}
-            <div className="w-full max-w-6xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-6xl mx-auto"
+            >
               {loading ? (
-                  <div className="flex justify-center py-4">
-                    <div className="w-4 h-4 border border-[var(--atmo-text)] border-t-transparent rounded-full animate-spin" />
-                  </div>
+                <div className="flex justify-center py-4">
+                  <div className="w-4 h-4 border border-[var(--atmo-text)] border-t-transparent rounded-full animate-spin" />
+                </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-slate-500 px-2 sm:px-0">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.9 }}
+                    className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-slate-500 px-2 sm:px-0"
+                  >
                     <span className="flex items-center gap-1.5 sm:gap-2">
-                      <Radio className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[var(--atmo-text)] animate-pulse" />
+                      <Radio className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[var(--atmo-text)]" />
                       SATELLITE MAGAZINE LOOP
                     </span>
                     <span className="hidden sm:inline">Scroll or Click items to read</span>
-                  </div>
+                  </motion.div>
 
                   {/* Horizontal Auto-Scroller ticker containing stories summaries */}
                   {/* Subscribe card (inline) */}
-                  <div className="max-w-4xl mx-auto mb-3 sm:mb-4 px-4 sm:px-0">
-                    <Subscribe />
-                  </div>
+<motion.div
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ duration: 0.6, delay: 1.0 }}
+                     className="max-w-4xl mx-auto mb-3 sm:mb-4 px-4 sm:px-0"
+                   >
+                     <Subscribe />
+                   </motion.div>
+                   
+                    {/* The Bento Archive */}
+                   <motion.div
+                     initial={{ opacity: 0, y: 30 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ duration: 0.8, delay: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                     className="mt-6 sm:mt-8"
+                   >
+                     <div className="flex items-center justify-between mb-4 px-2 sm:px-0">
+                       <h3 className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/70">
+                         The Bento Archive
+                       </h3>
+                       <span className="text-[9px] text-slate-500">{stories.length} Stories</span>
+                     </div>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
+                       {stories.map((story, index) => (
+                         <motion.div
+                           layout
+                           key={story.slug}
+                           className="group cursor-pointer glass-card tactile-card ripple-host overflow-hidden flex flex-col justify-between min-h-[18rem] sm:min-h-[22rem]"
+                           onClick={() => {
+                             setSelectedStory(story);
+                             setEntered(true);
+                             navigateTo(`/story/${story.slug}`);
+                           }}
+                           initial={{ opacity: 0, y: 20 }}
+                           animate={{ opacity: 1, y: 0 }}
+                           transition={{ type: "spring", stiffness: 260, damping: 20, delay: index * 0.03 }}
+                           id={`grid-card-${story.slug}`}
+                           whileHover={{ y: -4, rotateX: 2, rotateY: -2, scale: 1.02 }}
+                         >
+                           {/* Media Section */}
+                           <div className="relative w-full h-32 sm:h-44 overflow-hidden border-b border-white/5">
+                              <img
+                                src={story.cover || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"}
+                                alt={story.title}
+                                referrerPolicy="no-referrer"
+                                width="400"
+                                height="300"
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                decoding="async"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                loading="lazy"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80";
+                                }}
+                             />
+                             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/10" />
+                             
+                             {/* Floating Date Badge */}
+                             <span className="absolute top-3 left-3 px-2 py-0.5 rounded-none font-mono text-[9px] uppercase tracking-wider bg-black border border-white/5 text-slate-300">
+                               {new Date(story.pubDate).toLocaleDateString("en-US", {
+                                 month: "short",
+                                 day: "numeric",
+                               })}
+                             </span>
+                      
+                             {/* Primary Tag */}
+                             {story.categories[0] && (
+                               <span className="absolute bottom-3 right-3 px-2.5 py-0.5 rounded-none font-mono text-[9px] uppercase tracking-wider bg-black/80 text-[var(--glow-text)] border border-[var(--glow-text)]/25">
+                                 {story.categories[0]}
+                               </span>
+                             )}
+                           </div>
+                      
+                           {/* Data Section */}
+                           <div className="flex-1 p-3 sm:p-5 flex flex-col justify-between bg-black/20">
+                             <div>
+                               {/* Author Line */}
+                               <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                                 <AvatarImage
+                                   src={story.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde"}
+                                   alt={story.author}
+                                   className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-none object-cover border border-white/5"
+                                 />
+                                 <span className="text-[10px] sm:text-[11px] font-mono text-slate-400">
+                                   {story.author}
+                                 </span>
+                               </div>
+   
+                               {/* Title */}
+                               <h3 className="font-sans font-medium text-white text-sm sm:text-base group-hover:text-[var(--glow-text)] line-clamp-2 leading-snug transition-colors">
+                                 {story.title}
+                               </h3>
+   
+                               {/* Snippet Description */}
+                               <p className="text-[11px] sm:text-xs mt-1.5 sm:mt-2.5 text-slate-400 line-clamp-2 leading-relaxed font-light hidden sm:block">
+                                 {story.description}
+                               </p>
+                             </div>
+   
+                             <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-white/5 text-[10px] sm:text-[11px] font-mono mt-2 sm:mt-4">
+                               <span className="text-slate-500">
+                                 by {story.role || "Staff"}
+                               </span>
+                                
+                               {/* Floating Like & Save quick controls */}
+                               <div className="flex items-center gap-2 sm:gap-3">
+                                 <button
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     handleToggleLike(story.slug);
+                                   }}
+                                   className={`flex items-center gap-1 transition-colors p-1.5 sm:p-1 cursor-pointer hover:text-[var(--glow-text)] min-w-[28px] sm:min-w-[32px] min-h-[28px] sm:min-h-[32px] justify-center ${likedSlugs.includes(story.slug) ? "text-[var(--glow-text)] font-bold" : "text-slate-500"}`}
+                                   title={likedSlugs.includes(story.slug) ? "Unlike" : "Like"}
+                                 >
+                                   <Heart className={`w-3.5 h-3.5 ${likedSlugs.includes(story.slug) ? "fill-current text-[var(--glow-text)]" : ""}`} />
+                                   <span className="text-[10px] sm:text-[11px]">{getLikesCount(story.title, likedSlugs.includes(story.slug))}</span>
+                                 </button>
+                                 
+                                 <button
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     handleToggleSave(story.slug);
+                                   }}
+                                   className={`flex items-center gap-1 transition-colors p-1.5 sm:p-1 cursor-pointer hover:text-[var(--glow-text)] min-w-[28px] sm:min-w-[32px] min-h-[28px] sm:min-h-[32px] justify-center ${savedSlugs.includes(story.slug) ? "text-[var(--glow-text)]" : "text-slate-500"}`}
+                                   title={savedSlugs.includes(story.slug) ? "Remove Bookmark" : "Bookmark Story"}
+                                 >
+                                   <Bookmark className={`w-3.5 h-3.5 ${savedSlugs.includes(story.slug) ? "fill-current" : ""}`} />
+                                 </button>
 
-                  <div className="relative w-full overflow-hidden border-t border-b border-white/10 py-3 sm:py-4 bg-black/40 backdrop-blur-sm">
-                    <div className="flex gap-3 sm:gap-4 animate-marquee hover:pause whitespace-nowrap">
-                      {stories.map((story) => (
-                        <div
-                          key={story.slug}
-                          onClick={() => {
-                            setSelectedStory(story);
-                            setEntered(true);
-                            navigateTo(`/story/${story.slug}`);
-                          }}
-                          className="inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 border border-white/5 hover:border-[var(--atmo-border)] hover:bg-white/[0.02] transition-all cursor-pointer text-left"
-                          >
-                          <img
-                            src={story.cover || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80"}
-                            alt=""
-                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-none object-cover border border-white/10"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80";
-                            }}
-                          />
-                          <div>
-                            <p className="text-[10px] sm:text-[11px] font-bold text-white line-clamp-1 max-w-[140px] sm:max-w-[180px] uppercase tracking-wider">
-                              {story.title}
-                            </p>
-                            <span className="text-[8px] sm:text-[9px] font-mono text-[var(--atmo-text)] uppercase tracking-widest">
-                              by {story.author}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                                 <span className="flex items-center gap-1 text-[var(--glow-text)] font-bold group-hover:text-white transition-colors ml-0.5 sm:ml-1 text-[10px] sm:text-[11px]">
+                                   Read
+                                   <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                 </span>
+                               </div>
+                             </div>
+                           </div>
+                         </motion.div>
+                       ))}
+                     </div>
+                    </motion.div>
+                 </div>
               )}
-            </div>
+            </motion.div>
             
           </motion.div>
         ) : (
@@ -1321,67 +1446,95 @@ export default function App() {
                         </motion.div>
                       )}
                       
-                      {activeTab === "grid" && (
-                        <motion.div
-                          key="nav-grid"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.4 }}
-                        >
-                          <StoryGrid 
-                            stories={stories} 
-                            onSelectStory={handleSelectStory} 
-                            likedSlugs={likedSlugs}
-                            savedSlugs={savedSlugs}
-                            onToggleLike={handleToggleLike}
-                            onToggleSave={handleToggleSave}
-                          />
-                        </motion.div>
-                      )}
+                       {activeTab === "grid" && (
+                         <motion.div
+                           key="nav-grid"
+                           initial={{ opacity: 0 }}
+                           animate={{ opacity: 1 }}
+                           exit={{ opacity: 0 }}
+                           transition={{ duration: 0.4 }}
+                         >
+                           <Suspense fallback={
+                             <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-3">
+                               <div className="w-8 h-8 border border-[var(--atmo-text)] border-t-transparent rounded-full animate-spin" />
+                               <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase">Loading Grid...</span>
+                             </div>
+                           }>
+                             <StoryGrid 
+                               stories={stories} 
+                               onSelectStory={handleSelectStory} 
+                               likedSlugs={likedSlugs}
+                               savedSlugs={savedSlugs}
+                               onToggleLike={handleToggleLike}
+                               onToggleSave={handleToggleSave}
+                             />
+                           </Suspense>
+                         </motion.div>
+                       )}
 
-                      {activeTab === "list" && (
-                        <motion.div
-                          key="nav-list"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.4 }}
-                        >
-                          <StoryList 
-                            stories={stories} 
-                            onSelectStory={handleSelectStory} 
-                            likedSlugs={likedSlugs}
-                            savedSlugs={savedSlugs}
-                            onToggleLike={handleToggleLike}
-                            onToggleSave={handleToggleSave}
-                          />
-                        </motion.div>
-                      )}
+                       {activeTab === "list" && (
+                         <motion.div
+                           key="nav-list"
+                           initial={{ opacity: 0 }}
+                           animate={{ opacity: 1 }}
+                           exit={{ opacity: 0 }}
+                           transition={{ duration: 0.4 }}
+                         >
+                           <Suspense fallback={
+                             <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-3">
+                               <div className="w-8 h-8 border border-[var(--atmo-text)] border-t-transparent rounded-full animate-spin" />
+                               <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase">Loading List...</span>
+                             </div>
+                           }>
+                             <StoryList 
+                               stories={stories} 
+                               onSelectStory={handleSelectStory} 
+                               likedSlugs={likedSlugs}
+                               savedSlugs={savedSlugs}
+                               onToggleLike={handleToggleLike}
+                               onToggleSave={handleToggleSave}
+                             />
+                           </Suspense>
+                         </motion.div>
+                       )}
 
-                      {activeTab === "guideline" && (
-                        <motion.div
-                          key="nav-guideline"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.4 }}
-                        >
-                          <SubmissionGuideline />
-                        </motion.div>
-                      )}
+                       {activeTab === "guideline" && (
+                         <motion.div
+                           key="nav-guideline"
+                           initial={{ opacity: 0 }}
+                           animate={{ opacity: 1 }}
+                           exit={{ opacity: 0 }}
+                           transition={{ duration: 0.4 }}
+                         >
+                           <Suspense fallback={
+                             <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-3">
+                               <div className="w-8 h-8 border border-[var(--atmo-text)] border-t-transparent rounded-full animate-spin" />
+                               <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase">Loading Guidelines...</span>
+                             </div>
+                           }>
+                             <SubmissionGuideline />
+                           </Suspense>
+                         </motion.div>
+                       )}
 
-                      {activeTab === "authors" && (
-                        <motion.div
-                          key="nav-authors"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.4 }}
-                        >
-                          <AuthorsSection stories={stories} onSelectStory={handleSelectStory} editors={editors} writers={writers} aboutInfo={aboutInfo} />
-                        </motion.div>
-                      )}
+                       {activeTab === "authors" && (
+                         <motion.div
+                           key="nav-authors"
+                           initial={{ opacity: 0 }}
+                           animate={{ opacity: 1 }}
+                           exit={{ opacity: 0 }}
+                           transition={{ duration: 0.4 }}
+                         >
+                           <Suspense fallback={
+                             <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-3">
+                               <div className="w-8 h-8 border border-[var(--atmo-text)] border-t-transparent rounded-full animate-spin" />
+                               <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase">Loading Authors...</span>
+                             </div>
+                           }>
+                             <AuthorsSection stories={stories} onSelectStory={handleSelectStory} editors={editors} writers={writers} aboutInfo={aboutInfo} />
+                           </Suspense>
+                         </motion.div>
+                       )}
 
                       {activeTab === "saved" && (
                         <motion.div
@@ -1391,30 +1544,37 @@ export default function App() {
                           exit={{ opacity: 0 }}
                           transition={{ duration: 0.4 }}
                         >
-                          {stories.filter(s => savedSlugs.includes(s.slug)).length === 0 ? (
-                              <div className="flex flex-col items-center justify-center min-h-[300px] border border-white/10 bg-[#0c0c0c]/80 p-8 text-center max-w-xl mx-auto space-y-4">
-                              <Bookmark className="w-8 h-8 text-slate-600 animate-pulse" />
-                              <p className="font-mono text-xs uppercase tracking-widest text-slate-400">Your Archive is Empty</p>
-                              <p className="text-xs text-slate-500 leading-relaxed font-light">
-                                Connect to the 3D Universe or Bento Grid, find stories that challenge your cognitive horizons, and click their save trigger to register them here.
-                              </p>
-                              <button
-                                onClick={() => handleTabChange("3d")}
-                                className="px-5 py-2 border border-[var(--atmo-border)] text-[var(--atmo-text)] hover:bg-[var(--atmo-text)] hover:text-black font-mono text-[10px] uppercase tracking-widest transition-colors font-bold cursor-pointer"
-                              >
-                                Explore Cosmos
-                              </button>
-                            </div>
-                          ) : (
-                            <StoryGrid 
-                              stories={stories.filter(s => savedSlugs.includes(s.slug))} 
-                              onSelectStory={handleSelectStory}
-                              likedSlugs={likedSlugs}
-                              savedSlugs={savedSlugs}
-                              onToggleLike={handleToggleLike}
-                              onToggleSave={handleToggleSave}
-                            />
-                          )}
+                           {stories.filter(s => savedSlugs.includes(s.slug)).length === 0 ? (
+                             <div className="flex flex-col items-center justify-center min-h-[300px] border border-white/10 bg-[#0c0c0c]/80 p-8 text-center max-w-xl mx-auto space-y-4">
+                               <Bookmark className="w-8 h-8 text-slate-600" />
+                               <p className="font-mono text-xs uppercase tracking-widest text-slate-400">Your Archive is Empty</p>
+                               <p className="text-xs text-slate-500 leading-relaxed font-light">
+                                 Connect to the 3D Universe or Bento Grid, find stories that challenge your cognitive horizons, and click their save trigger to register them here.
+                               </p>
+                               <button
+                                 onClick={() => handleTabChange("3d")}
+                                 className="px-5 py-2 border border-[var(--atmo-border)] text-[var(--atmo-text)] hover:bg-[var(--atmo-text)] hover:text-black font-mono text-[10px] uppercase tracking-widest transition-colors font-bold cursor-pointer"
+                               >
+                                 Explore Cosmos
+                               </button>
+                             </div>
+                           ) : (
+                             <Suspense fallback={
+                               <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-3">
+                                 <div className="w-8 h-8 border border-[var(--atmo-text)] border-t-transparent rounded-full animate-spin" />
+                                 <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase">Loading...</span>
+                               </div>
+                             }>
+                               <StoryGrid 
+                                 stories={stories.filter(s => savedSlugs.includes(s.slug))} 
+                                 onSelectStory={handleSelectStory}
+                                 likedSlugs={likedSlugs}
+                                 savedSlugs={savedSlugs}
+                                 onToggleLike={handleToggleLike}
+                                 onToggleSave={handleToggleSave}
+                               />
+                             </Suspense>
+                           )}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -1435,7 +1595,7 @@ export default function App() {
                       <div className="space-y-2 border-l-2 border-slate-700 pl-4">
                         <h4 className="text-[11px] font-mono uppercase tracking-[0.2em] text-white">NODE RECEPTOR</h4>
                         <p className="text-xs text-slate-400 flex items-center gap-1.5 font-light">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[var(--atmo-text)] animate-ping" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-[var(--atmo-text)]" />
                           Online / Synced dynamically
                         </p>
                       </div>
@@ -1484,14 +1644,16 @@ export default function App() {
       </AnimatePresence>
 
       {/* Volumetric Story Modal Popup */}
-      <StoryModal 
-        story={selectedStory} 
-        onClose={() => handleSelectStory(null)} 
-        isLiked={selectedStory ? likedSlugs.includes(selectedStory.slug) : false}
-        isSaved={selectedStory ? savedSlugs.includes(selectedStory.slug) : false}
-        onToggleLike={handleToggleLike}
-        onToggleSave={handleToggleSave}
-      />
+      <Suspense fallback={null}>
+        <StoryModal 
+          story={selectedStory} 
+          onClose={() => handleSelectStory(null)} 
+          isLiked={selectedStory ? likedSlugs.includes(selectedStory.slug) : false}
+          isSaved={selectedStory ? savedSlugs.includes(selectedStory.slug) : false}
+          onToggleLike={handleToggleLike}
+          onToggleSave={handleToggleSave}
+        />
+      </Suspense>
     </div>
   );
 }

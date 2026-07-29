@@ -30,7 +30,7 @@ export default function DashboardStats({
       <div className="space-y-2 border-l-2 border-slate-700 pl-4">
         <h4 className="text-[11px] font-mono uppercase tracking-[0.2em] text-white">NODE RECEPTOR</h4>
         <p className="text-xs text-slate-400 flex items-center gap-1.5 font-light">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--atmo-text)] animate-ping" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--atmo-text)]" />
           Online / Synced dynamically
         </p>
       </div>

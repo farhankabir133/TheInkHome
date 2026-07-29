@@ -8,7 +8,7 @@ interface EmptySavedStateProps {
 export default function EmptySavedState({ onExplore }: EmptySavedStateProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[300px] border border-white/10 bg-[#0c0c0c]/80 p-8 text-center max-w-xl mx-auto space-y-4">
-      <Bookmark className="w-8 h-8 text-slate-600 animate-pulse" />
+      <Bookmark className="w-8 h-8 text-slate-600" />
       <p className="font-mono text-xs uppercase tracking-widest text-slate-400">Your Archive is Empty</p>
       <p className="text-xs text-slate-500 leading-relaxed font-light">
         Connect to the 3D Universe or Bento Grid, find stories that challenge your cognitive horizons, and click their save trigger to register them here.
