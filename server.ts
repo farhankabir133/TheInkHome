@@ -12,6 +12,7 @@ import {
   parseMediumRSS,
   djb2Hash,
 } from "./src/lib/api-server";
+import { initializeKnowledgeBase, searchDocuments, generateRAGResponse } from "./src/lib/ai/rag";
 
 const AVATAR_CACHE_TTL = 1000 * 60 * 60;
 
@@ -455,6 +456,47 @@ async function startServer() {
     const event = req.query.event || "unknown";
     console.log(`[TELEMETRY] Event: ${event} | Payload:`, payload);
     res.status(200).json({ success: true, message: "Telemetry received successfully" });
+  });
+
+  let aiInitialized = false;
+  async function ensureAIInit() {
+    if (!aiInitialized) {
+      await initializeKnowledgeBase();
+      aiInitialized = true;
+    }
+  }
+
+  app.get("/api/ai/search", async (req, res) => {
+    try {
+      await ensureAIInit();
+      const query = (req.query.q as string) || "";
+      const limit = parseInt((req.query.limit as string) || "8");
+      if (!query.trim()) {
+        return res.status(400).json({ error: "Missing query parameter 'q'" });
+      }
+      const results = searchDocuments(query, Math.min(limit, 20));
+      res.json({ query, count: results.length, results });
+    } catch (err) {
+      console.error("AI search error:", err);
+      res.status(500).json({ error: "Search failed" });
+    }
+  });
+
+  app.post("/api/ai/chat", express.json({ limit: "10kb" }), async (req, res) => {
+    try {
+      await ensureAIInit();
+      const query: string = req.body?.query || req.body?.messages?.at(-1)?.content || "";
+      const history = req.body?.messages || [];
+      if (!query.trim()) {
+        return res.status(400).json({ error: "Missing query" });
+      }
+      const docs = searchDocuments(query, 8);
+      const result = await generateRAGResponse(query, history, docs);
+      res.json(result);
+    } catch (err) {
+      console.error("AI chat error:", err);
+      res.status(500).json({ error: "Failed to generate response" });
+    }
   });
 
   let vite: any;

@@ -18,7 +18,7 @@ export default defineConfig(() => {
           chunkFileNames: 'assets/[name]-[hash].js',
           entryFileNames: 'assets/[name]-[hash].js',
         },
-        external: ['three', '@google/genai', '@upstash/redis', 'express', 'helmet', 'express-rate-limit'],
+        external: ['three', '@google/genai', 'groq-sdk', '@upstash/redis', 'express', 'helmet', 'express-rate-limit'],
       },
     },
     server: {

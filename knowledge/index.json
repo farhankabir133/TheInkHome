@@ -1,0 +1,919 @@
+[
+  {
+    "id": "publication-mission",
+    "type": "publication",
+    "title": "Mission",
+    "path": "publication/mission.md",
+    "tags": [
+      "mission",
+      "publication"
+    ]
+  },
+  {
+    "id": "publication-vision",
+    "type": "publication",
+    "title": "Vision",
+    "path": "publication/vision.md",
+    "tags": [
+      "vision",
+      "publication"
+    ]
+  },
+  {
+    "id": "publication-values",
+    "type": "publication",
+    "title": "Values",
+    "path": "publication/values.md",
+    "tags": [
+      "values",
+      "publication"
+    ]
+  },
+  {
+    "id": "publication-story",
+    "type": "publication",
+    "title": "Story",
+    "path": "publication/story.md",
+    "tags": [
+      "story",
+      "publication"
+    ]
+  },
+  {
+    "id": "publication-roadmap",
+    "type": "publication",
+    "title": "Roadmap",
+    "path": "publication/roadmap.md",
+    "tags": [
+      "roadmap",
+      "publication"
+    ]
+  },
+  {
+    "id": "publication-faq",
+    "type": "publication",
+    "title": "FAQ",
+    "path": "publication/faq.md",
+    "tags": [
+      "faq",
+      "publication"
+    ]
+  },
+  {
+    "id": "publication-team",
+    "type": "publication",
+    "title": "Team",
+    "path": "publication/team.md",
+    "tags": [
+      "team",
+      "publication"
+    ]
+  },
+  {
+    "id": "publication-submission",
+    "type": "publication",
+    "title": "Submission Guidelines",
+    "path": "publication/submission.md",
+    "tags": [
+      "submission",
+      "publication"
+    ]
+  },
+  {
+    "id": "publication-policies",
+    "type": "publication",
+    "title": "Policies",
+    "path": "publication/policies.md",
+    "tags": [
+      "policies",
+      "publication"
+    ]
+  },
+  {
+    "id": "founder-profile",
+    "type": "founder",
+    "title": "Founder Profile",
+    "path": "founder/profile.md",
+    "tags": [
+      "founder",
+      "profile"
+    ]
+  },
+  {
+    "id": "editor-farhankabir133",
+    "type": "editor",
+    "title": "Farhan Kabir",
+    "path": "editors/farhankabir133.md",
+    "tags": [
+      "editor",
+      "farhankabir133",
+      "AI Engineer | Full-Stack Dev"
+    ]
+  },
+  {
+    "id": "editor-dbatool242",
+    "type": "editor",
+    "title": "Dua Batool",
+    "path": "editors/dbatool242.md",
+    "tags": [
+      "editor",
+      "dbatool242",
+      "Published Book Author | Zoology Student"
+    ]
+  },
+  {
+    "id": "writer-adammcclarin",
+    "type": "writer",
+    "title": "Adam McClarin",
+    "path": "writers/adammcclarin.md",
+    "tags": [
+      "writer",
+      "adammcclarin",
+      "VeloxSync Creator & AI Engineer"
+    ]
+  },
+  {
+    "id": "writer-mabelpenrose",
+    "type": "writer",
+    "title": "Mabel Penrose",
+    "path": "writers/mabelpenrose.md",
+    "tags": [
+      "writer",
+      "mabelpenrose",
+      "HSP & Creative Essayist"
+    ]
+  },
+  {
+    "id": "writer-yiwanye",
+    "type": "writer",
+    "title": "Yiwan Ye",
+    "path": "writers/yiwanye.md",
+    "tags": [
+      "writer",
+      "yiwanye",
+      "Assistant Professor & Health Researcher"
+    ]
+  },
+  {
+    "id": "writer-soamidayakrishnananda",
+    "type": "writer",
+    "title": "Soami Daya Krishnananda",
+    "path": "writers/soamidayakrishnananda.md",
+    "tags": [
+      "writer",
+      "soamidayakrishnananda",
+      "Physicist & Metaphysics Columnist"
+    ]
+  },
+  {
+    "id": "writer-annajaworska",
+    "type": "writer",
+    "title": "curious but grounded | Anna Jaworska",
+    "path": "writers/annajaworska.md",
+    "tags": [
+      "writer",
+      "annajaworska",
+      "Systems & Emotional Patterns Essayist"
+    ]
+  },
+  {
+    "id": "writer-marmanrezashah",
+    "type": "writer",
+    "title": "M. Arman Reza Shah",
+    "path": "writers/marmanrezashah.md",
+    "tags": [
+      "writer",
+      "marmanrezashah",
+      "Geotechnical Engineer & Researcher"
+    ]
+  },
+  {
+    "id": "writer-achellesantos",
+    "type": "writer",
+    "title": "Achelle Santos",
+    "path": "writers/achellesantos.md",
+    "tags": [
+      "writer",
+      "achellesantos",
+      "Freelance Writer & Children's Author"
+    ]
+  },
+  {
+    "id": "writer-amberfaulk",
+    "type": "writer",
+    "title": "Amber Faulk",
+    "path": "writers/amberfaulk.md",
+    "tags": [
+      "writer",
+      "amberfaulk",
+      "Mindfulness & Workplace Wellness Advisor"
+    ]
+  },
+  {
+    "id": "writer-paushalidas",
+    "type": "writer",
+    "title": "Paushali Das",
+    "path": "writers/paushalidas.md",
+    "tags": [
+      "writer",
+      "paushalidas",
+      "Literary & Emotional Well-being Columnist"
+    ]
+  },
+  {
+    "id": "writer-sadmantaqi",
+    "type": "writer",
+    "title": "Sadman Taqi",
+    "path": "writers/sadmantaqi.md",
+    "tags": [
+      "writer",
+      "sadmantaqi",
+      "Mechanical Engineer & Culture Writer"
+    ]
+  },
+  {
+    "id": "writer-taibamansuri",
+    "type": "writer",
+    "title": "Taiba Mansuri",
+    "path": "writers/taibamansuri.md",
+    "tags": [
+      "writer",
+      "taibamansuri",
+      "Storytelling & Daily Chaos Observer"
+    ]
+  },
+  {
+    "id": "writer-claudiocasella",
+    "type": "writer",
+    "title": "Claudio Casella",
+    "path": "writers/claudiocasella.md",
+    "tags": [
+      "writer",
+      "claudiocasella",
+      "Literature & Music Writer"
+    ]
+  },
+  {
+    "id": "writer-amooridwan",
+    "type": "writer",
+    "title": "Amoo Ridwan",
+    "path": "writers/amooridwan.md",
+    "tags": [
+      "writer",
+      "amooridwan",
+      "Finance & Personal Discipline Columnist"
+    ]
+  },
+  {
+    "id": "writer-logeshtv",
+    "type": "writer",
+    "title": "LOGESH T V | Genai Developer",
+    "path": "writers/logeshtv.md",
+    "tags": [
+      "writer",
+      "logeshtv",
+      "AI Engineer & GenAI Explainer"
+    ]
+  },
+  {
+    "id": "writer-mimmaya",
+    "type": "writer",
+    "title": "Mim Maya",
+    "path": "writers/mimmaya.md",
+    "tags": [
+      "writer",
+      "mimmaya",
+      "Tech, Relationships & Healing Essayist"
+    ]
+  },
+  {
+    "id": "writer-dbatool242",
+    "type": "writer",
+    "title": "Dua Batool",
+    "path": "writers/dbatool242.md",
+    "tags": [
+      "writer",
+      "dbatool242",
+      "Published Author & Zoology Researcher"
+    ]
+  },
+  {
+    "id": "writer-jmactavish",
+    "type": "writer",
+    "title": "Jmactavish",
+    "path": "writers/jmactavish.md",
+    "tags": [
+      "writer",
+      "jmactavish",
+      "Independent Creative Columnist"
+    ]
+  },
+  {
+    "id": "writer-vikrakkrisnasamy",
+    "type": "writer",
+    "title": "Vikra K Krishnasamy",
+    "path": "writers/vikrakkrisnasamy.md",
+    "tags": [
+      "writer",
+      "vikrakkrisnasamy",
+      "Cultural & Analytical Thinker"
+    ]
+  },
+  {
+    "id": "writer-lc-squared",
+    "type": "writer",
+    "title": "LC Squared",
+    "path": "writers/lc-squared.md",
+    "tags": [
+      "writer",
+      "lc-squared",
+      "Human Resilience & Motherhood Essayist"
+    ]
+  },
+  {
+    "id": "writer-michaelkoyfman",
+    "type": "writer",
+    "title": "Michael Koyfman",
+    "path": "writers/michaelkoyfman.md",
+    "tags": [
+      "writer",
+      "michaelkoyfman",
+      "Politics, Finance & AI Student"
+    ]
+  },
+  {
+    "id": "article-extremely-sorry-for-not-being-here",
+    "type": "article",
+    "title": "Extremely Sorry for Not Being Here",
+    "path": "articles/extremely-sorry-for-not-being-here.md",
+    "tags": [
+      "article",
+      "personal-essay",
+      "writing",
+      "the-ink-home",
+      "mental-health",
+      "gratitude"
+    ]
+  },
+  {
+    "id": "article-art-is-not-what-you-see-but-what-you-make-others-see-edgar-degas",
+    "type": "article",
+    "title": "“”Art is not what you see, but what you make others see.” — Edgar Degas",
+    "path": "articles/art-is-not-what-you-see-but-what-you-make-others-see-edgar-degas.md",
+    "tags": [
+      "article",
+      "museums",
+      "culture",
+      "renaissance",
+      "history",
+      "art"
+    ]
+  },
+  {
+    "id": "article-the-dirt-track-dream",
+    "type": "article",
+    "title": "The Dirt Track Dream",
+    "path": "articles/the-dirt-track-dream.md",
+    "tags": [
+      "article",
+      "go-kart",
+      "dirt-track",
+      "kansas",
+      "late-model",
+      "racing"
+    ]
+  },
+  {
+    "id": "article-do-we-really-need-guis-the-emergence-of-mcp-as-the-usb-of-ai",
+    "type": "article",
+    "title": "Do We Really Need GUIs?: The Emergence of MCP as the “USB of AI”",
+    "path": "articles/do-we-really-need-guis-the-emergence-of-mcp-as-the-usb-of-ai.md",
+    "tags": [
+      "article",
+      "vibe-coding",
+      "anthropic-claude",
+      "ai",
+      "mcp-server"
+    ]
+  },
+  {
+    "id": "article-every-drop-matters-protecting-pakistans-future-through-smarter-water-use",
+    "type": "article",
+    "title": "Every Drop Matters: Protecting Pakistan’s Future Through Smarter Water Use",
+    "path": "articles/every-drop-matters-protecting-pakistans-future-through-smarter-water-use.md",
+    "tags": [
+      "article",
+      "water-conservation",
+      "sustainability",
+      "pakistan",
+      "climate-change",
+      "environment"
+    ]
+  },
+  {
+    "id": "article-serious-allegations-regarding-matei-gavriluta-prmediaonline-pro-media-news",
+    "type": "article",
+    "title": "Serious Allegations Regarding Matei Gavriluta / PRMediaOnline (Pro Media News)",
+    "path": "articles/serious-allegations-regarding-matei-gavriluta-prmediaonline-pro-media-news.md",
+    "tags": [
+      "article",
+      "crypto-scam-stories-usa",
+      "crypto-scam",
+      "crypto-scam-reports"
+    ]
+  },
+  {
+    "id": "article-the-fire-discipline-a-campers-guide-to-responsible-wildfire-safety",
+    "type": "article",
+    "title": "The Fire Discipline: A Camper’s Guide to Responsible Wildfire Safety",
+    "path": "articles/the-fire-discipline-a-campers-guide-to-responsible-wildfire-safety.md",
+    "tags": [
+      "article",
+      "camping-safety-tips",
+      "camping",
+      "campfire-stories",
+      "campfire",
+      "camping-safety"
+    ]
+  },
+  {
+    "id": "article-why-apps-exist-why-vibe-coding-will-hits-a-dead-end-in-the-end",
+    "type": "article",
+    "title": "Why Apps Exist? Why Vibe-Coding Will Hits a Dead End In the End?",
+    "path": "articles/why-apps-exist-why-vibe-coding-will-hits-a-dead-end-in-the-end.md",
+    "tags": [
+      "article",
+      "software-development",
+      "mcp-protocol",
+      "vibe-coding",
+      "ai"
+    ]
+  },
+  {
+    "id": "article-dedicated-to-you",
+    "type": "article",
+    "title": "Dedicated to you",
+    "path": "articles/dedicated-to-you.md",
+    "tags": [
+      "article",
+      "medium",
+      "this-happened-to-me",
+      "writing-life",
+      "gratitude",
+      "reading"
+    ]
+  },
+  {
+    "id": "article-the-feeling-technology-forgot",
+    "type": "article",
+    "title": "The Feeling Technology Forgot",
+    "path": "articles/the-feeling-technology-forgot.md",
+    "tags": [
+      "article",
+      "innovation",
+      "founder-update",
+      "wonder",
+      "design"
+    ]
+  },
+  {
+    "id": "category-ai",
+    "type": "category",
+    "title": "ai",
+    "path": "categories/ai.md",
+    "tags": [
+      "category",
+      "ai"
+    ]
+  },
+  {
+    "id": "category-anthropic-claude",
+    "type": "category",
+    "title": "anthropic-claude",
+    "path": "categories/anthropic-claude.md",
+    "tags": [
+      "category",
+      "anthropic-claude"
+    ]
+  },
+  {
+    "id": "category-art",
+    "type": "category",
+    "title": "art",
+    "path": "categories/art.md",
+    "tags": [
+      "category",
+      "art"
+    ]
+  },
+  {
+    "id": "category-campfire",
+    "type": "category",
+    "title": "campfire",
+    "path": "categories/campfire.md",
+    "tags": [
+      "category",
+      "campfire"
+    ]
+  },
+  {
+    "id": "category-campfire-stories",
+    "type": "category",
+    "title": "campfire-stories",
+    "path": "categories/campfire-stories.md",
+    "tags": [
+      "category",
+      "campfire-stories"
+    ]
+  },
+  {
+    "id": "category-camping",
+    "type": "category",
+    "title": "camping",
+    "path": "categories/camping.md",
+    "tags": [
+      "category",
+      "camping"
+    ]
+  },
+  {
+    "id": "category-camping-safety",
+    "type": "category",
+    "title": "camping-safety",
+    "path": "categories/camping-safety.md",
+    "tags": [
+      "category",
+      "camping-safety"
+    ]
+  },
+  {
+    "id": "category-camping-safety-tips",
+    "type": "category",
+    "title": "camping-safety-tips",
+    "path": "categories/camping-safety-tips.md",
+    "tags": [
+      "category",
+      "camping-safety-tips"
+    ]
+  },
+  {
+    "id": "category-climate-change",
+    "type": "category",
+    "title": "climate-change",
+    "path": "categories/climate-change.md",
+    "tags": [
+      "category",
+      "climate-change"
+    ]
+  },
+  {
+    "id": "category-crypto-scam",
+    "type": "category",
+    "title": "crypto-scam",
+    "path": "categories/crypto-scam.md",
+    "tags": [
+      "category",
+      "crypto-scam"
+    ]
+  },
+  {
+    "id": "category-crypto-scam-reports",
+    "type": "category",
+    "title": "crypto-scam-reports",
+    "path": "categories/crypto-scam-reports.md",
+    "tags": [
+      "category",
+      "crypto-scam-reports"
+    ]
+  },
+  {
+    "id": "category-crypto-scam-stories-usa",
+    "type": "category",
+    "title": "crypto-scam-stories-usa",
+    "path": "categories/crypto-scam-stories-usa.md",
+    "tags": [
+      "category",
+      "crypto-scam-stories-usa"
+    ]
+  },
+  {
+    "id": "category-culture",
+    "type": "category",
+    "title": "culture",
+    "path": "categories/culture.md",
+    "tags": [
+      "category",
+      "culture"
+    ]
+  },
+  {
+    "id": "category-design",
+    "type": "category",
+    "title": "design",
+    "path": "categories/design.md",
+    "tags": [
+      "category",
+      "design"
+    ]
+  },
+  {
+    "id": "category-dirt-track",
+    "type": "category",
+    "title": "dirt-track",
+    "path": "categories/dirt-track.md",
+    "tags": [
+      "category",
+      "dirt-track"
+    ]
+  },
+  {
+    "id": "category-environment",
+    "type": "category",
+    "title": "environment",
+    "path": "categories/environment.md",
+    "tags": [
+      "category",
+      "environment"
+    ]
+  },
+  {
+    "id": "category-founder-update",
+    "type": "category",
+    "title": "founder-update",
+    "path": "categories/founder-update.md",
+    "tags": [
+      "category",
+      "founder-update"
+    ]
+  },
+  {
+    "id": "category-go-kart",
+    "type": "category",
+    "title": "go-kart",
+    "path": "categories/go-kart.md",
+    "tags": [
+      "category",
+      "go-kart"
+    ]
+  },
+  {
+    "id": "category-gratitude",
+    "type": "category",
+    "title": "gratitude",
+    "path": "categories/gratitude.md",
+    "tags": [
+      "category",
+      "gratitude"
+    ]
+  },
+  {
+    "id": "category-history",
+    "type": "category",
+    "title": "history",
+    "path": "categories/history.md",
+    "tags": [
+      "category",
+      "history"
+    ]
+  },
+  {
+    "id": "category-innovation",
+    "type": "category",
+    "title": "innovation",
+    "path": "categories/innovation.md",
+    "tags": [
+      "category",
+      "innovation"
+    ]
+  },
+  {
+    "id": "category-kansas",
+    "type": "category",
+    "title": "kansas",
+    "path": "categories/kansas.md",
+    "tags": [
+      "category",
+      "kansas"
+    ]
+  },
+  {
+    "id": "category-late-model",
+    "type": "category",
+    "title": "late-model",
+    "path": "categories/late-model.md",
+    "tags": [
+      "category",
+      "late-model"
+    ]
+  },
+  {
+    "id": "category-mcp-protocol",
+    "type": "category",
+    "title": "mcp-protocol",
+    "path": "categories/mcp-protocol.md",
+    "tags": [
+      "category",
+      "mcp-protocol"
+    ]
+  },
+  {
+    "id": "category-mcp-server",
+    "type": "category",
+    "title": "mcp-server",
+    "path": "categories/mcp-server.md",
+    "tags": [
+      "category",
+      "mcp-server"
+    ]
+  },
+  {
+    "id": "category-medium",
+    "type": "category",
+    "title": "medium",
+    "path": "categories/medium.md",
+    "tags": [
+      "category",
+      "medium"
+    ]
+  },
+  {
+    "id": "category-mental-health",
+    "type": "category",
+    "title": "mental-health",
+    "path": "categories/mental-health.md",
+    "tags": [
+      "category",
+      "mental-health"
+    ]
+  },
+  {
+    "id": "category-museums",
+    "type": "category",
+    "title": "museums",
+    "path": "categories/museums.md",
+    "tags": [
+      "category",
+      "museums"
+    ]
+  },
+  {
+    "id": "category-pakistan",
+    "type": "category",
+    "title": "pakistan",
+    "path": "categories/pakistan.md",
+    "tags": [
+      "category",
+      "pakistan"
+    ]
+  },
+  {
+    "id": "category-personal-essay",
+    "type": "category",
+    "title": "personal-essay",
+    "path": "categories/personal-essay.md",
+    "tags": [
+      "category",
+      "personal-essay"
+    ]
+  },
+  {
+    "id": "category-racing",
+    "type": "category",
+    "title": "racing",
+    "path": "categories/racing.md",
+    "tags": [
+      "category",
+      "racing"
+    ]
+  },
+  {
+    "id": "category-reading",
+    "type": "category",
+    "title": "reading",
+    "path": "categories/reading.md",
+    "tags": [
+      "category",
+      "reading"
+    ]
+  },
+  {
+    "id": "category-renaissance",
+    "type": "category",
+    "title": "renaissance",
+    "path": "categories/renaissance.md",
+    "tags": [
+      "category",
+      "renaissance"
+    ]
+  },
+  {
+    "id": "category-software-development",
+    "type": "category",
+    "title": "software-development",
+    "path": "categories/software-development.md",
+    "tags": [
+      "category",
+      "software-development"
+    ]
+  },
+  {
+    "id": "category-sustainability",
+    "type": "category",
+    "title": "sustainability",
+    "path": "categories/sustainability.md",
+    "tags": [
+      "category",
+      "sustainability"
+    ]
+  },
+  {
+    "id": "category-the-ink-home",
+    "type": "category",
+    "title": "the-ink-home",
+    "path": "categories/the-ink-home.md",
+    "tags": [
+      "category",
+      "the-ink-home"
+    ]
+  },
+  {
+    "id": "category-this-happened-to-me",
+    "type": "category",
+    "title": "this-happened-to-me",
+    "path": "categories/this-happened-to-me.md",
+    "tags": [
+      "category",
+      "this-happened-to-me"
+    ]
+  },
+  {
+    "id": "category-vibe-coding",
+    "type": "category",
+    "title": "vibe-coding",
+    "path": "categories/vibe-coding.md",
+    "tags": [
+      "category",
+      "vibe-coding"
+    ]
+  },
+  {
+    "id": "category-water-conservation",
+    "type": "category",
+    "title": "water-conservation",
+    "path": "categories/water-conservation.md",
+    "tags": [
+      "category",
+      "water-conservation"
+    ]
+  },
+  {
+    "id": "category-wonder",
+    "type": "category",
+    "title": "wonder",
+    "path": "categories/wonder.md",
+    "tags": [
+      "category",
+      "wonder"
+    ]
+  },
+  {
+    "id": "category-writing",
+    "type": "category",
+    "title": "writing",
+    "path": "categories/writing.md",
+    "tags": [
+      "category",
+      "writing"
+    ]
+  },
+  {
+    "id": "category-writing-life",
+    "type": "category",
+    "title": "writing-life",
+    "path": "categories/writing-life.md",
+    "tags": [
+      "category",
+      "writing-life"
+    ]
+  },
+  {
+    "id": "support-guidelines",
+    "type": "support",
+    "title": "Support Guidelines",
+    "path": "support/guidelines.md",
+    "tags": [
+      "support",
+      "guidelines"
+    ]
+  },
+  {
+    "id": "support-contact",
+    "type": "support",
+    "title": "Contact",
+    "path": "support/contact.md",
+    "tags": [
+      "support",
+      "contact"
+    ]
+  }
+]

@@ -38,6 +38,8 @@ import {
 } from "lucide-react";
 import Subscribe from "./components/Subscribe";
 import { getLikesCount } from "./lib/interaction";
+import AIAssistant from "./components/AIAssistant";
+import AdminDashboard from "./components/AdminDashboard";
 
 export default function App() {
   // Initialize stories from local fallback for instant rendering on static hosts
@@ -58,6 +60,7 @@ export default function App() {
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [cinematicComplete, setCinematicComplete] = useState(false);
   const [isWelcomeHome, setIsWelcomeHome] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
 
   const pendingSlugRef = useRef<string | null>(null);
 
@@ -77,6 +80,16 @@ export default function App() {
     };
     window.addEventListener("scroll", handleWinScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleWinScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'A') {
+        setAdminOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // Helper to push history state and update URL
@@ -1654,6 +1667,13 @@ export default function App() {
           onToggleSave={handleToggleSave}
         />
       </Suspense>
+
+      <AIAssistant />
+      <AnimatePresence>
+        {adminOpen && (
+          <AdminDashboard onClose={() => setAdminOpen(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
