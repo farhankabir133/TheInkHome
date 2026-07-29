@@ -20,11 +20,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       exists: fs.existsSync(p),
     }));
 
+    const srcExists = fs.existsSync(path.join(cwd, "src"));
+    const apiExists = fs.existsSync(path.join(cwd, "api"));
+
     const groqKey = process.env.GROQ_API_KEY;
 
     return res.status(200).json({
       status: "ok",
       cwd,
+      srcExists,
+      apiExists,
       candidates: results,
       groqConfigured: !!groqKey,
       groqPrefix: groqKey ? `${groqKey.slice(0, 6)}...` : null,
