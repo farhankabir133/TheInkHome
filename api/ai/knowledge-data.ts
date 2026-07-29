@@ -1036,5 +1036,3 @@ export const knowledgeDocs: KnowledgeDoc[] = [
     }
   }
 ];
-
-export default knowledgeDocs;

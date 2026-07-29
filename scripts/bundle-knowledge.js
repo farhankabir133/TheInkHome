@@ -92,8 +92,6 @@ const tsContent = `export interface KnowledgeDoc {
 }
 
 export const knowledgeDocs: KnowledgeDoc[] = ${json};
-
-export default knowledgeDocs;
 `;
 
 fs.writeFileSync(OUTPUT_TS, tsContent);
