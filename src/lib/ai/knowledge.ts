@@ -2,13 +2,16 @@ import { KnowledgeDoc } from "./types";
 import fs from "fs";
 import path from "path";
 
-const KB_ROOT = path.join(process.cwd(), "knowledge");
-
 function resolveKnowledgeRoot(): string {
-  if (fs.existsSync(KB_ROOT)) return KB_ROOT;
-  const alt = path.join(process.cwd(), "src", "knowledge");
-  if (fs.existsSync(alt)) return alt;
-  return KB_ROOT;
+  const candidates = [
+    path.join(process.cwd(), "knowledge"),
+    path.join(process.cwd(), "dist", "knowledge"),
+    path.join(process.cwd(), "src", "knowledge"),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return path.join(process.cwd(), "knowledge");
 }
 
 function parseFrontmatter(raw: string): { meta: Record<string, any>; body: string } {
