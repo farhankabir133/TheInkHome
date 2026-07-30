@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { initializeKnowledgeBase, getDocuments, searchDocuments, generateRAGResponse } from "./rag";
-import { SYSTEM_PROMPT } from "./system-prompt";
+import { initializeKnowledgeBase, getDocuments } from "./rag";
 
 let initialized = false;
 
