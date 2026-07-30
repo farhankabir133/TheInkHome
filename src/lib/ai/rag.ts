@@ -2,9 +2,9 @@ import { KnowledgeDoc, SearchResult, ChatResponse, ActionItem } from "./types";
 import { keywordSearch, fullTextSearch, buildSearchIndex } from "./search";
 import { loadAllDocuments, getDocUrl, getDocTypeLabel } from "./knowledge";
 import { SYSTEM_PROMPT } from "./system-prompt";
-import Groq from "groq-sdk";
 
 const GROQ_MODEL = "llama-3.3-70b-versatile";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 let documents: KnowledgeDoc[] = [];
 let embeddings: Record<string, number[]> = {};
@@ -164,23 +164,33 @@ Reminder: Answer ONLY using the context documents. Be concise. Structure your an
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       return {
-        message: "AI service is not configured. Please set GROQ_API_KEY in Vercel environment variables.",
+        message: "AI service is not configured. Please set GROQ_API_KEY in environment variables.",
         sources: docs.slice(0, 3),
         suggestedQuestions: suggestions,
         actions,
       };
     }
-    const groq = new Groq({ apiKey });
-    const completion = await groq.chat.completions.create({
-      model: GROQ_MODEL,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.3,
-      max_tokens: 1024,
+    const response = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 1024,
+      }),
     });
-    const message = completion.choices?.[0]?.message?.content?.trim() || "I couldn't find that information in The Ink Home's knowledge base.";
+    if (!response.ok) {
+      throw new Error(`Groq API returned ${response.status}`);
+    }
+    const data = await response.json();
+    const message = data.choices?.[0]?.message?.content?.trim() || "I couldn't find that information in The Ink Home's knowledge base.";
     return {
       message,
       sources: docs.slice(0, 3),
